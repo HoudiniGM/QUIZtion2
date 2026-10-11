@@ -85,6 +85,20 @@ No **Android** isso não é necessário (o SQLite nativo já é incluído via
 `sqlite3_flutter_libs`). Os testes (`flutter test`) usam SQLite nativo e também
 não dependem desses arquivos.
 
+## Integração contínua (CI)
+
+A cada push ou pull request na `main`, o GitHub Actions executa, para o app
+Flutter (`.github/workflows/ci.yml`):
+
+1. `flutter pub get`
+2. `dart run build_runner build` (gera o código do drift)
+3. `dart format --set-exit-if-changed` (checa formatação)
+4. `flutter analyze` (erros de compilação e lint)
+5. `flutter test` (testes de domínio, repositório e smoke test)
+
+Build de APK/web e testes em emulador **não** fazem parte do CI nesta fase
+(mantido enxuto); podem ser adicionados na Etapa 4.
+
 ## Segurança
 
 A chave da API Gemini **nunca** é incluída no aplicativo móvel. Ela permanece exclusivamente no backend, em variável de ambiente. Ver `docs/architecture.md` para as limitações de segurança do MVP.
