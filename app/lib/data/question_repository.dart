@@ -5,7 +5,6 @@ import '../domain/content_type.dart';
 import '../domain/difficulty.dart';
 import '../domain/question.dart';
 import 'app_database.dart';
-import 'tables.dart';
 
 /// A theme with its subtopics, for the UI.
 class ThemeWithSubtopics {

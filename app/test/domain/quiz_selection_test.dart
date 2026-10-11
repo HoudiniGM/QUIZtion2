@@ -43,7 +43,7 @@ void main() {
     });
 
     test('no available questions yields an appropriate message', () {
-      final s = QuizSelection(available: const [], requested: 3);
+      const s = QuizSelection(available: [], requested: 3);
       expect(s.hasAny, isFalse);
       expect(s.insufficient, isTrue);
       expect(s.insufficiencyMessage, contains('Não há questões'));
