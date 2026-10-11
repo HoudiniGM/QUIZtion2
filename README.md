@@ -55,7 +55,7 @@ flutter pub get
 # 3. Gera o código do drift (app_database.g.dart). Necessário antes de compilar/testar.
 dart run build_runner build --delete-conflicting-outputs
 
-# 4. Roda os testes de lógica (embaralhamento, validação, pontuação, quiz).
+# 4. Roda os testes de lógica (embaralhamento, validação, pontuação, quiz) e o smoke test.
 flutter test
 
 # 5. Executa o app.
@@ -65,6 +65,13 @@ flutter run -d <seu-dispositivo>      # em um dispositivo/emulador Android
 
 > Nas próximas vezes, basta `flutter pub get` + `dart run build_runner build` (quando
 > o schema do banco mudar) e `flutter run`.
+
+> **Nota:** o `flutter create .` gera um `test/widget_test.dart` padrão (teste de
+> contador) que referencia uma classe `MyApp` inexistente neste projeto e faz
+> `flutter test` falhar. O repositório já versiona o seu próprio
+> `test/widget_test.dart` (um smoke test real do app). Se, após rodar
+> `flutter create .`, o git acusar esse arquivo como modificado, descarte a
+> versão gerada e mantenha a do repositório: `git checkout -- test/widget_test.dart`.
 
 ### Observação para rodar no navegador (web)
 
