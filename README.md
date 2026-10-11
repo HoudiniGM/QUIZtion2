@@ -1,0 +1,83 @@
+# QUIZtion
+
+Aplicativo móvel de estudos por meio de questionários de múltipla escolha gerados por IA, em qualquer área do conhecimento. Organização em **Tema → Subtópico → Questões**, com quizzes offline e histórico de desempenho.
+
+> MVP para uso pessoal, em um único dispositivo. Sem autenticação, contas ou sincronização entre dispositivos.
+
+## Estrutura do repositório (monorepo)
+
+```
+QUIZtion2/
+├── app/        # Aplicativo Flutter (Android + build Web para visualização)
+├── backend/    # Backend Node.js + Express (implementado na Etapa 3)
+├── docs/       # Decisões arquiteturais, limitações e setup
+└── README.md
+```
+
+## Stack
+
+| Camada            | Tecnologia                                      |
+|-------------------|-------------------------------------------------|
+| App móvel         | Flutter (Dart) — alvo Android, build Web de apoio |
+| Estado            | provider                                         |
+| Navegação         | go_router                                        |
+| Armazenamento     | SQLite via drift                                 |
+| Backend (Etapa 3) | Node.js + Express (deploy na Vercel)             |
+| IA (Etapa 3)      | Google Gemini (chave somente no backend)         |
+
+## Status do desenvolvimento
+
+O projeto é construído de forma incremental (ver `docs/architecture.md`):
+
+- **Etapa 1 — Base do app e quiz local (offline):** em andamento.
+- Etapa 2 — Histórico e consistência.
+- Etapa 3 — Backend e geração por IA.
+- Etapa 4 — Acabamento e confiabilidade.
+
+## Como rodar o app (Flutter)
+
+**Pré-requisitos:** Flutter SDK **>= 3.27** (Dart >= 3.6) instalado e configurado no VS Code.
+
+O repositório versiona o código-fonte (`lib/`, `test/`, `web/`, `pubspec.yaml`). As
+pastas nativas de plataforma (`android/`, `ios/`, etc.) **não** são versionadas e
+são geradas localmente pelo próprio Flutter. Na primeira vez:
+
+```bash
+cd app
+
+# 1. Gera as pastas de plataforma (android/, web runtime, etc.) ao redor do lib/ já existente.
+#    Não sobrescreve o seu código em lib/.
+flutter create . --platforms=android,web
+
+# 2. Baixa as dependências.
+flutter pub get
+
+# 3. Gera o código do drift (banco.g.dart). Necessário antes de compilar/testar.
+dart run build_runner build --delete-conflicting-outputs
+
+# 4. Roda os testes de lógica (embaralhamento, validação, pontuação, quiz).
+flutter test
+
+# 5. Executa o app.
+flutter run -d chrome                 # no navegador (visualização rápida), ou
+flutter run -d <seu-dispositivo>      # em um dispositivo/emulador Android
+```
+
+> Nas próximas vezes, basta `flutter pub get` + `dart run build_runner build` (quando
+> o schema do banco mudar) e `flutter run`.
+
+### Observação para rodar no navegador (web)
+
+O drift precisa de dois arquivos auxiliares para funcionar na web. Baixe-os e
+coloque-os na pasta `app/web/` **antes** de `flutter run -d chrome`:
+
+- `sqlite3.wasm` — de https://github.com/simolus3/sqlite3.dart/releases
+- `drift_worker.js` — de https://github.com/simolus3/drift/releases
+
+No **Android** isso não é necessário (o SQLite nativo já é incluído via
+`sqlite3_flutter_libs`). Os testes (`flutter test`) usam SQLite nativo e também
+não dependem desses arquivos.
+
+## Segurança
+
+A chave da API Gemini **nunca** é incluída no aplicativo móvel. Ela permanece exclusivamente no backend, em variável de ambiente. Ver `docs/architecture.md` para as limitações de segurança do MVP.

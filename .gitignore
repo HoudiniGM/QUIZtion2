@@ -1,0 +1,7 @@
+# Node (backend — Etapa 3)
+node_modules/
+.env
+*.log
+
+# OS
+.DS_Store
