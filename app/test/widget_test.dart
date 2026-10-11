@@ -1,4 +1,3 @@
-import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiztion/data/app_database.dart';
@@ -12,7 +11,7 @@ import 'package:quiztion/main.dart';
 
 void main() {
   testWidgets('home screen renders after initialization', (tester) async {
-    final db = AppDatabase(NativeDatabase.memory());
+    final db = AppDatabase.memory();
     final repository = QuestionRepository(db);
 
     await tester.pumpWidget(QuiztionApp(repository: repository));

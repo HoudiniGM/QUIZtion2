@@ -1,4 +1,3 @@
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiztion/data/app_database.dart';
 import 'package:quiztion/data/question_repository.dart';
@@ -31,7 +30,7 @@ void main() {
   late QuestionRepository repo;
 
   setUp(() {
-    db = AppDatabase(NativeDatabase.memory());
+    db = AppDatabase.memory();
     repo = QuestionRepository(db);
   });
 
