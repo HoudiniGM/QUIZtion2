@@ -52,7 +52,7 @@ flutter create . --platforms=android,web
 # 2. Baixa as dependências.
 flutter pub get
 
-# 3. Gera o código do drift (banco.g.dart). Necessário antes de compilar/testar.
+# 3. Gera o código do drift (app_database.g.dart). Necessário antes de compilar/testar.
 dart run build_runner build --delete-conflicting-outputs
 
 # 4. Roda os testes de lógica (embaralhamento, validação, pontuação, quiz).

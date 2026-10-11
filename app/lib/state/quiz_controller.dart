@@ -1,54 +1,54 @@
 import 'package:flutter/foundation.dart';
 
-import '../domain/motor_quiz.dart';
-import '../domain/questao.dart';
-import '../domain/tentativa.dart';
+import '../domain/attempt.dart';
+import '../domain/question.dart';
+import '../domain/quiz_engine.dart';
 
-/// Controla uma sessão de quiz para a UI, encapsulando o [MotorQuiz] e
-/// notificando mudanças de estado.
+/// Drives a quiz session for the UI, wrapping the [QuizEngine] and notifying
+/// state changes.
 class QuizController extends ChangeNotifier {
-  final MotorQuiz _motor;
+  final QuizEngine _engine;
 
   QuizController({
-    required String tema,
-    required List<String> subtopicos,
-    required List<Questao> questoesEmbaralhadas,
-  }) : _motor = MotorQuiz(
-          tema: tema,
-          subtopicos: subtopicos,
-          questoes: questoesEmbaralhadas,
+    required String theme,
+    required List<String> subtopics,
+    required List<Question> shuffledQuestions,
+  }) : _engine = QuizEngine(
+          theme: theme,
+          subtopics: subtopics,
+          questions: shuffledQuestions,
         );
 
-  int get indiceAtual => _motor.indiceAtual;
-  int get total => _motor.total;
-  EstadoQuestao get atual => _motor.atual;
-  bool get ehUltima => _motor.ehUltima;
-  bool get podeFinalizar => _motor.podeFinalizar;
+  int get currentIndex => _engine.currentIndex;
+  int get total => _engine.total;
+  QuestionState get current => _engine.current;
+  bool get isLast => _engine.isLast;
+  bool get canFinish => _engine.canFinish;
 
-  bool get temSelecao => atual.idSelecionado != null;
-  bool get respondida => atual.respondida;
+  bool get hasSelection => current.selectedId != null;
+  bool get answered => current.answered;
 
-  void selecionar(String idAlternativa) {
-    _motor.selecionar(idAlternativa);
+  void select(String optionId) {
+    _engine.select(optionId);
     notifyListeners();
   }
 
-  bool responder() {
-    final ok = _motor.responder();
+  bool answer() {
+    final ok = _engine.answer();
     if (ok) notifyListeners();
     return ok;
   }
 
-  bool proxima() {
-    final ok = _motor.proxima();
+  bool next() {
+    final ok = _engine.next();
     if (ok) notifyListeners();
     return ok;
   }
 
-  Tentativa finalizar() {
-    return _motor.finalizar(
-      id: 'tentativa-${DateTime.now().microsecondsSinceEpoch}',
-      data: DateTime.now(),
+  Attempt finish() {
+    return _engine.finish(
+      id: 'attempt-${DateTime.now().microsecondsSinceEpoch}',
+      date: DateTime.now(),
     );
   }
 }

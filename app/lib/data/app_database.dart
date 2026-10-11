@@ -1,26 +1,26 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
-import 'tabelas.dart';
+import 'tables.dart';
 
-part 'banco.g.dart';
+part 'app_database.g.dart';
 
-/// Banco de dados local do QUIZtion (SQLite via drift).
+/// Local database of QUIZtion (SQLite via drift).
 ///
-/// A geração de código (`banco.g.dart`) é feita com:
+/// Code generation (`app_database.g.dart`) is produced with:
 ///   dart run build_runner build --delete-conflicting-outputs
 @DriftDatabase(
   tables: [
-    Temas,
-    Subtopicos,
-    Questoes,
-    Alternativas,
-    Tentativas,
-    RespostasTentativa,
+    Themes,
+    Subtopics,
+    Questions,
+    AnswerOptions,
+    Attempts,
+    AttemptAnswers,
   ],
 )
-class Banco extends _$Banco {
-  Banco([QueryExecutor? executor])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase([QueryExecutor? executor])
       : super(executor ?? driftDatabase(name: 'quiztion'));
 
   @override
@@ -32,7 +32,7 @@ class Banco extends _$Banco {
           await m.createAll();
         },
         beforeOpen: (details) async {
-          // Garante integridade referencial (ON DELETE CASCADE funciona).
+          // Ensure referential integrity (ON DELETE CASCADE works).
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );

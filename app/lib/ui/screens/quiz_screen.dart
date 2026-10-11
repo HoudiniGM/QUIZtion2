@@ -2,33 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/alternativa.dart';
-import '../../domain/questao.dart';
+import '../../domain/answer_option.dart';
+import '../../domain/question.dart';
 import '../../state/quiz_controller.dart';
-import '../widgets/conteudo_view.dart';
+import '../widgets/content_view.dart';
 
-/// Tela do quiz: uma questão por vez, confirmação com "Responder" (definitiva),
-/// feedback de correto/incorreto e explicação de cada alternativa
-/// (requisitos, seções 4.5 e 14).
-class QuizTela extends StatelessWidget {
-  final String tema;
-  final List<String> subtopicos;
-  final List<Questao> questoes;
+/// Quiz screen: one question at a time, confirmation with "Responder" (final),
+/// correct/incorrect feedback and the explanation of each option
+/// (requirements, sections 4.5 and 14).
+class QuizScreen extends StatelessWidget {
+  final String theme;
+  final List<String> subtopics;
+  final List<Question> questions;
 
-  const QuizTela({
+  const QuizScreen({
     super.key,
-    required this.tema,
-    required this.subtopicos,
-    required this.questoes,
+    required this.theme,
+    required this.subtopics,
+    required this.questions,
   });
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => QuizController(
-        tema: tema,
-        subtopicos: subtopicos,
-        questoesEmbaralhadas: questoes,
+        theme: theme,
+        subtopics: subtopics,
+        shuffledQuestions: questions,
       ),
       child: const _QuizView(),
     );
@@ -41,67 +41,65 @@ class _QuizView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<QuizController>();
-    final estado = ctrl.atual;
-    final questao = estado.questao;
+    final state = ctrl.current;
+    final question = state.question;
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        final sair = await _confirmarSair(context);
-        if (sair == true && context.mounted) context.pop();
+        final leave = await _confirmLeave(context);
+        if (leave == true && context.mounted) context.pop();
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Questão ${ctrl.indiceAtual + 1} de ${ctrl.total}'),
+          title: Text('Questão ${ctrl.currentIndex + 1} de ${ctrl.total}'),
         ),
         body: Column(
           children: [
             LinearProgressIndicator(
-              value: (ctrl.indiceAtual + 1) / ctrl.total,
+              value: (ctrl.currentIndex + 1) / ctrl.total,
             ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
                   Text(
-                    '${questao.tema} • ${questao.subtopico} • '
-                    '${questao.dificuldade.rotulo}',
+                    '${question.theme} • ${question.subtopic} • '
+                    '${question.difficulty.label}',
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   const SizedBox(height: 12),
-                  ConteudoView(
-                    texto: questao.enunciado,
-                    tipo: questao.tipoConteudo,
-                    estiloTexto: Theme.of(context).textTheme.titleMedium,
+                  ContentView(
+                    text: question.statement,
+                    type: question.contentType,
+                    textStyle: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 20),
-                  ...questao.alternativas.map(
-                    (a) => _AlternativaCard(
-                      alternativa: a,
-                      selecionada: estado.idSelecionado == a.id,
-                      respondida: ctrl.respondida,
-                      idCorreta: questao.alternativaCorreta.id,
-                      onTap: ctrl.respondida
-                          ? null
-                          : () => ctrl.selecionar(a.id),
+                  ...question.options.map(
+                    (o) => _OptionCard(
+                      option: o,
+                      selected: state.selectedId == o.id,
+                      answered: ctrl.answered,
+                      correctId: question.correctOption.id,
+                      onTap: ctrl.answered ? null : () => ctrl.select(o.id),
                     ),
                   ),
-                  if (ctrl.respondida) ...[
+                  if (ctrl.answered) ...[
                     const SizedBox(height: 16),
-                    _FeedbackResposta(acertou: estado.acertou),
+                    _AnswerFeedback(correct: state.isCorrect),
                   ],
                 ],
               ),
             ),
-            _BarraInferior(ctrl: ctrl),
+            _BottomBar(ctrl: ctrl),
           ],
         ),
       ),
     );
   }
 
-  Future<bool?> _confirmarSair(BuildContext context) {
+  Future<bool?> _confirmLeave(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -124,39 +122,39 @@ class _QuizView extends StatelessWidget {
   }
 }
 
-class _AlternativaCard extends StatelessWidget {
-  final Alternativa alternativa;
-  final bool selecionada;
-  final bool respondida;
-  final String idCorreta;
+class _OptionCard extends StatelessWidget {
+  final AnswerOption option;
+  final bool selected;
+  final bool answered;
+  final String correctId;
   final VoidCallback? onTap;
 
-  const _AlternativaCard({
-    required this.alternativa,
-    required this.selecionada,
-    required this.respondida,
-    required this.idCorreta,
+  const _OptionCard({
+    required this.option,
+    required this.selected,
+    required this.answered,
+    required this.correctId,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ehCorreta = alternativa.id == idCorreta;
+    final isCorrect = option.id == correctId;
 
-    Color? cor;
-    if (respondida) {
-      if (ehCorreta) {
-        cor = Colors.green.withValues(alpha: 0.15);
-      } else if (selecionada) {
-        cor = Colors.red.withValues(alpha: 0.15);
+    Color? color;
+    if (answered) {
+      if (isCorrect) {
+        color = Colors.green.withValues(alpha: 0.15);
+      } else if (selected) {
+        color = Colors.red.withValues(alpha: 0.15);
       }
-    } else if (selecionada) {
-      cor = theme.colorScheme.primaryContainer;
+    } else if (selected) {
+      color = theme.colorScheme.primaryContainer;
     }
 
     return Card(
-      color: cor,
+      color: color,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -168,34 +166,34 @@ class _AlternativaCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    respondida
-                        ? (ehCorreta
+                    answered
+                        ? (isCorrect
                             ? Icons.check_circle
-                            : (selecionada
+                            : (selected
                                 ? Icons.cancel
                                 : Icons.radio_button_unchecked))
-                        : (selecionada
+                        : (selected
                             ? Icons.radio_button_checked
                             : Icons.radio_button_unchecked),
-                    color: respondida
-                        ? (ehCorreta
+                    color: answered
+                        ? (isCorrect
                             ? Colors.green
-                            : (selecionada ? Colors.red : null))
+                            : (selected ? Colors.red : null))
                         : null,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: ConteudoView(
-                      texto: alternativa.texto,
-                      tipo: alternativa.tipoConteudo,
+                    child: ContentView(
+                      text: option.text,
+                      type: option.contentType,
                     ),
                   ),
                 ],
               ),
-              if (respondida) ...[
+              if (answered) ...[
                 const SizedBox(height: 8),
                 Text(
-                  alternativa.explicacao,
+                  option.explanation,
                   style: theme.textTheme.bodySmall,
                 ),
               ],
@@ -207,26 +205,26 @@ class _AlternativaCard extends StatelessWidget {
   }
 }
 
-class _FeedbackResposta extends StatelessWidget {
-  final bool acertou;
+class _AnswerFeedback extends StatelessWidget {
+  final bool correct;
 
-  const _FeedbackResposta({required this.acertou});
+  const _AnswerFeedback({required this.correct});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: (acertou ? Colors.green : Colors.red).withValues(alpha: 0.12),
+        color: (correct ? Colors.green : Colors.red).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(acertou ? Icons.check_circle : Icons.cancel,
-              color: acertou ? Colors.green : Colors.red),
+          Icon(correct ? Icons.check_circle : Icons.cancel,
+              color: correct ? Colors.green : Colors.red),
           const SizedBox(width: 8),
           Text(
-            acertou ? 'Resposta correta!' : 'Resposta incorreta.',
+            correct ? 'Resposta correta!' : 'Resposta incorreta.',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
@@ -235,38 +233,38 @@ class _FeedbackResposta extends StatelessWidget {
   }
 }
 
-class _BarraInferior extends StatelessWidget {
+class _BottomBar extends StatelessWidget {
   final QuizController ctrl;
 
-  const _BarraInferior({required this.ctrl});
+  const _BottomBar({required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: !ctrl.respondida
+        child: !ctrl.answered
             ? FilledButton(
-                onPressed: ctrl.temSelecao ? () => ctrl.responder() : null,
+                onPressed: ctrl.hasSelection ? () => ctrl.answer() : null,
                 child: const Text('Responder'),
               )
-            : (ctrl.ehUltima
+            : (ctrl.isLast
                 ? FilledButton.icon(
                     icon: const Icon(Icons.flag),
                     label: const Text('Finalizar'),
-                    onPressed: () => _finalizar(context),
+                    onPressed: () => _finish(context),
                   )
                 : FilledButton.icon(
                     icon: const Icon(Icons.arrow_forward),
                     label: const Text('Próxima questão'),
-                    onPressed: () => ctrl.proxima(),
+                    onPressed: () => ctrl.next(),
                   )),
       ),
     );
   }
 
-  void _finalizar(BuildContext context) {
-    final tentativa = ctrl.finalizar();
-    context.pushReplacement('/resultados', extra: tentativa);
+  void _finish(BuildContext context) {
+    final attempt = ctrl.finish();
+    context.pushReplacement('/results', extra: attempt);
   }
 }

@@ -47,14 +47,16 @@ QUIZtion é um app de estudos por quizzes de múltipla escolha gerados por IA, e
 
 ## 4. Modelo de dados (local)
 
-Entidades principais (detalhadas no schema drift em `app/lib/data/`):
+Entidades principais (schema drift em `app/lib/data/tables.dart`). Nota: os
+identificadores de código são em inglês; apenas o conteúdo exibido ao usuário é
+em português.
 
-- **temas** — id, nome, data de criação.
-- **subtopicos** — id, tema_id (FK), nome, data de criação.
-- **questoes** — id, subtopico_id (FK), enunciado, tipo de conteúdo (texto/código), dificuldade (basico/intermediario/avancado), tags (opcional), data de criação, versão do prompt (nullable), metadados de geração (nullable).
-- **alternativas** — id, questao_id (FK), texto, explicação individual, flag `correta`, ordem estável. Cada alternativa mantém sua explicação e identidade mesmo após embaralhamento.
-- **tentativas** — id, data, dados de desempenho (preenchido a partir da Etapa 2).
-- **respostas_tentativa** — id, tentativa_id (FK), questao_id, alternativa escolhida, correta/incorreta.
+- **themes** — id, name, createdAt.
+- **subtopics** — id, themeId (FK), name, createdAt.
+- **questions** — id, subtopicId, theme, subtopic, statement, contentType (text/code), difficulty (basic/intermediate/advanced), tags (opcional), createdAt, promptVersion (nullable), generationMetadata (nullable).
+- **answer_options** — id, questionId (FK), text, explanation, flag `correct`, position (ordem estável). Cada alternativa mantém sua explicação e identidade mesmo após embaralhamento.
+- **attempts** — id, date, theme, subtopics, total, correctCount (preenchido a partir da Etapa 2).
+- **attempt_answers** — id, attemptId (FK), questionId, chosenOptionId.
 
 O modelo é extensível: campos de imagem/diagrama **não** são implementados agora, mas a estrutura permite adicioná-los no futuro sem reescrita (requisitos 10, 11, 21).
 
@@ -74,6 +76,14 @@ O modelo é extensível: campos de imagem/diagrama **não** são implementados a
 - Sem imagens/diagramas; sem execução de código; apenas múltipla escolha.
 - App nativo não compilável no ambiente de desenvolvimento assistido (sem Flutter SDK lá); o backend é testável nesse ambiente. Testes do app rodam no ambiente do desenvolvedor.
 
-## 7. Histórico de decisões
+## 7. Convenção de idioma no código
+
+- **Código em inglês:** nomes de classes, métodos, variáveis, campos, enums,
+  arquivos, pastas e comentários/documentação de código.
+- **Português apenas no que é apresentado ao usuário:** textos de interface,
+  mensagens de erro/aviso e o conteúdo das questões (enunciados, alternativas,
+  explicações). A documentação do projeto (README, `docs/`) também é em pt-BR.
+
+## 8. Histórico de decisões
 
 - Stack do app migrada de Kotlin nativo → **Flutter**, pois o desenvolvedor não possui/não pode instalar Android Studio e já domina Flutter no VS Code. Flutter atende os requisitos e viabiliza a validação pelo próprio desenvolvedor.

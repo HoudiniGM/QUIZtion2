@@ -1,32 +1,32 @@
-import '../domain/alternativa.dart';
-import '../domain/dificuldade.dart';
-import '../domain/questao.dart';
-import '../domain/tipo_conteudo.dart';
-import 'repositorio_questoes.dart';
+import '../domain/answer_option.dart';
+import '../domain/content_type.dart';
+import '../domain/difficulty.dart';
+import '../domain/question.dart';
+import 'question_repository.dart';
 
-/// Popula o banco local, na primeira execução, com temas e subtópicos
-/// sugeridos (requisitos, seção 3) e um pequeno conjunto de questões de
-/// exemplo — para que o fluxo de quiz funcione offline, sem IA.
+/// Populates the local database, on first run, with suggested themes and
+/// subtopics (requirements, section 3) and a small set of example questions —
+/// so the quiz flow works offline, without AI.
 ///
-/// Os exemplos NÃO limitam o uso do aplicativo: o usuário pode criar seus
-/// próprios temas e subtópicos livremente.
-class SemeadorDados {
-  final RepositorioQuestoes _repo;
+/// The examples do NOT limit the use of the app: the user can freely create
+/// their own themes and subtopics.
+class DataSeeder {
+  final QuestionRepository _repo;
 
-  SemeadorDados(this._repo);
+  DataSeeder(this._repo);
 
-  /// Executa o seed apenas se o banco ainda não tiver questões.
-  Future<void> semearSeNecessario() async {
-    final total = await _repo.contarQuestoes();
+  /// Runs the seed only if the database has no questions yet.
+  Future<void> seedIfNeeded() async {
+    final total = await _repo.countQuestions();
     if (total > 0) return;
-    await semear();
+    await seed();
   }
 
-  Future<void> semear() async {
-    final agora = DateTime(2026, 1, 1);
+  Future<void> seed() async {
+    final now = DateTime(2026, 1, 1);
 
-    // Estrutura de temas → subtópicos sugeridos.
-    final estrutura = <String, List<String>>{
+    // Theme -> suggested subtopics structure. Content is user-facing (pt-BR).
+    final structure = <String, List<String>>{
       'Java Core': [
         'Sintaxe, tipos e operadores',
         'Estruturas de controle',
@@ -87,83 +87,79 @@ class SemeadorDados {
       ],
     };
 
-    for (final entrada in estrutura.entries) {
-      final tema = entrada.key;
-      await _repo.inserirTema(
-        id: _slug(tema),
-        nome: tema,
-        criadoEm: agora,
-      );
-      for (final sub in entrada.value) {
-        await _repo.inserirSubtopico(
-          id: '${_slug(tema)}__${_slug(sub)}',
-          temaId: _slug(tema),
-          nome: sub,
-          criadoEm: agora,
+    for (final entry in structure.entries) {
+      final theme = entry.key;
+      await _repo.insertTheme(id: _slug(theme), name: theme, createdAt: now);
+      for (final sub in entry.value) {
+        await _repo.insertSubtopic(
+          id: '${_slug(theme)}__${_slug(sub)}',
+          themeId: _slug(theme),
+          name: sub,
+          createdAt: now,
         );
       }
     }
 
-    for (final q in _questoesExemplo(agora)) {
-      await _repo.inserirQuestao(q);
+    for (final q in _exampleQuestions(now)) {
+      await _repo.insertQuestion(q);
     }
   }
 
-  List<Questao> _questoesExemplo(DateTime agora) {
+  List<Question> _exampleQuestions(DateTime now) {
     return [
-      // --- Java / Collections — Básico (ex. da seção 8.1) ---
-      Questao(
-        id: 'seed-collections-basico-1',
-        tema: 'Java Core',
-        subtopico: 'Collections',
-        enunciado:
+      // --- Java / Collections — Basic (example from section 8.1) ---
+      Question(
+        id: 'seed-collections-basic-1',
+        theme: 'Java Core',
+        subtopic: 'Collections',
+        statement:
             'Qual implementação da interface List permite armazenar elementos '
             'em uma lista redimensionável e mantém a ordem de inserção?',
-        dificuldade: Dificuldade.basico,
-        criadaEm: agora,
-        alternativas: const [
-          Alternativa(
+        difficulty: Difficulty.basic,
+        createdAt: now,
+        options: const [
+          AnswerOption(
             id: 'a',
-            texto: 'HashSet',
-            correta: false,
-            explicacao:
+            text: 'HashSet',
+            correct: false,
+            explanation:
                 'Incorreta. Implementa Set, não List, e não garante a ordem '
                 'de inserção.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'b',
-            texto: 'ArrayList',
-            correta: true,
-            explicacao:
+            text: 'ArrayList',
+            correct: true,
+            explanation:
                 'Correta. Implementa List, permite adicionar e remover '
                 'elementos e mantém a ordem de inserção.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'c',
-            texto: 'HashMap',
-            correta: false,
-            explicacao:
+            text: 'HashMap',
+            correct: false,
+            explanation:
                 'Incorreta. Armazena associações entre chaves e valores; não '
                 'é uma implementação de List.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'd',
-            texto: 'TreeSet',
-            correta: false,
-            explicacao:
+            text: 'TreeSet',
+            correct: false,
+            explanation:
                 'Incorreta. Implementa Set e organiza os elementos segundo '
                 'uma ordenação, não pela ordem de inserção.',
           ),
         ],
       ),
 
-      // --- Java / Collections — Intermediário (ex. da seção 8.2) ---
-      Questao(
-        id: 'seed-collections-intermediario-1',
-        tema: 'Java Core',
-        subtopico: 'Collections',
-        tipoConteudo: TipoConteudo.codigo,
-        enunciado: 'Considere o código:\n\n'
+      // --- Java / Collections — Intermediate (example from section 8.2) ---
+      Question(
+        id: 'seed-collections-intermediate-1',
+        theme: 'Java Core',
+        subtopic: 'Collections',
+        contentType: ContentType.code,
+        statement: 'Considere o código:\n\n'
             'List<String> nomes = new ArrayList<>();\n'
             'nomes.add("Ana");\n'
             'nomes.add("Bruno");\n'
@@ -171,190 +167,190 @@ class SemeadorDados {
             'Set<String> unicos = new HashSet<>(nomes);\n\n'
             'System.out.println(unicos.size());\n\n'
             'Qual é o resultado esperado?',
-        dificuldade: Dificuldade.intermediario,
-        criadaEm: agora,
-        alternativas: const [
-          Alternativa(
+        difficulty: Difficulty.intermediate,
+        createdAt: now,
+        options: const [
+          AnswerOption(
             id: 'a',
-            texto: '2, porque o conjunto não mantém elementos duplicados.',
-            correta: true,
-            explicacao:
+            text: '2, porque o conjunto não mantém elementos duplicados.',
+            correct: true,
+            explanation:
                 'Correta. A lista tem três elementos, mas dois são iguais. No '
                 'HashSet, as duas ocorrências de "Ana" viram um único '
                 'elemento, resultando em dois elementos distintos.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'b',
-            texto:
+            text:
                 '3, porque o conjunto preserva todos os elementos da lista.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. O Set não mantém duplicados; a quantidade pode '
                 'ser menor que a da lista original.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'c',
-            texto:
+            text:
                 '2, porque o conjunto mantém a ordem e remove apenas '
                 'duplicatas consecutivas.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. HashSet não garante ordem de inserção e elimina '
                 'duplicatas sejam elas consecutivas ou não.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'd',
-            texto:
+            text:
                 'O código não compila, pois não dá para criar HashSet de '
                 'uma List.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. O construtor de HashSet aceita uma coleção, '
                 'incluindo List, com tipos compatíveis.',
           ),
         ],
       ),
 
-      // --- Java / Collections — Avançado (ex. da seção 8.3) ---
-      Questao(
-        id: 'seed-collections-avancado-1',
-        tema: 'Java Core',
-        subtopico: 'Collections',
-        enunciado:
+      // --- Java / Collections — Advanced (example from section 8.3) ---
+      Question(
+        id: 'seed-collections-advanced-1',
+        theme: 'Java Core',
+        subtopic: 'Collections',
+        statement:
             'Uma aplicação recebe uma lista de códigos de produtos. Precisa '
             'remover duplicatas, preservar a ordem da primeira ocorrência de '
             'cada código e percorrer os resultados nessa mesma ordem. Qual '
             'alternativa atende melhor usando implementações padrão do Java?',
-        dificuldade: Dificuldade.avancado,
-        criadaEm: agora,
-        alternativas: const [
-          Alternativa(
+        difficulty: Difficulty.advanced,
+        createdAt: now,
+        options: const [
+          AnswerOption(
             id: 'a',
-            texto:
+            text:
                 'Criar um HashSet a partir da lista, pois remove duplicatas e '
                 'preserva a ordem de inserção.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. HashSet elimina duplicatas, mas não garante a '
                 'ordem de iteração.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'b',
-            texto:
+            text:
                 'Criar um TreeSet a partir da lista, pois remove duplicatas e '
                 'mantém a ordem original de chegada.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. TreeSet ordena os elementos pela ordenação '
                 'natural ou por um comparador, não pela ordem de chegada.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'c',
-            texto:
+            text:
                 'Criar um LinkedHashSet a partir da lista e percorrê-lo, pois '
                 'remove duplicatas e mantém a ordem de inserção.',
-            correta: true,
-            explicacao:
+            correct: true,
+            explanation:
                 'Correta. LinkedHashSet elimina duplicados e mantém a ordem '
                 'de inserção; a primeira ocorrência define a posição.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'd',
-            texto:
+            text:
                 'Ordenar a lista e convertê-la em ArrayList, pois a ordenação '
                 'elimina duplicatas automaticamente.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. Ordenar não remove duplicatas e ainda altera a '
                 'ordem original de chegada.',
           ),
         ],
       ),
 
-      // --- Orientação a Objetos / Encapsulamento — Básico ---
-      Questao(
-        id: 'seed-oo-encapsulamento-basico-1',
-        tema: 'Orientação a Objetos',
-        subtopico: 'Encapsulamento',
-        enunciado:
+      // --- Object Orientation / Encapsulation — Basic ---
+      Question(
+        id: 'seed-oo-encapsulation-basic-1',
+        theme: 'Orientação a Objetos',
+        subtopic: 'Encapsulamento',
+        statement:
             'Qual é o principal objetivo do encapsulamento na orientação a '
             'objetos?',
-        dificuldade: Dificuldade.basico,
-        criadaEm: agora,
-        alternativas: const [
-          Alternativa(
+        difficulty: Difficulty.basic,
+        createdAt: now,
+        options: const [
+          AnswerOption(
             id: 'a',
-            texto:
+            text:
                 'Proteger o estado interno de um objeto, controlando o acesso '
                 'por meio de métodos.',
-            correta: true,
-            explicacao:
+            correct: true,
+            explanation:
                 'Correta. O encapsulamento restringe o acesso direto aos '
                 'dados e expõe um comportamento controlado.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'b',
-            texto:
+            text:
                 'Permitir que uma classe herde atributos e métodos de outra.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. Isso descreve herança, não encapsulamento.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'c',
-            texto:
+            text:
                 'Permitir que um mesmo método se comporte de formas diferentes.',
-            correta: false,
-            explicacao: 'Incorreta. Isso descreve polimorfismo.',
+            correct: false,
+            explanation: 'Incorreta. Isso descreve polimorfismo.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'd',
-            texto:
+            text:
                 'Dividir um sistema em camadas independentes de infraestrutura.',
-            correta: false,
-            explicacao:
+            correct: false,
+            explanation:
                 'Incorreta. Isso se refere a arquitetura em camadas, não a '
                 'encapsulamento.',
           ),
         ],
       ),
 
-      // --- Bancos de Dados / SQL — Básico ---
-      Questao(
-        id: 'seed-sql-basico-1',
-        tema: 'Bancos de Dados',
-        subtopico: 'SQL',
-        enunciado:
+      // --- Databases / SQL — Basic ---
+      Question(
+        id: 'seed-sql-basic-1',
+        theme: 'Bancos de Dados',
+        subtopic: 'SQL',
+        statement:
             'Qual comando SQL é utilizado para recuperar dados de uma tabela?',
-        dificuldade: Dificuldade.basico,
-        criadaEm: agora,
-        alternativas: const [
-          Alternativa(
+        difficulty: Difficulty.basic,
+        createdAt: now,
+        options: const [
+          AnswerOption(
             id: 'a',
-            texto: 'INSERT',
-            correta: false,
-            explicacao:
+            text: 'INSERT',
+            correct: false,
+            explanation:
                 'Incorreta. INSERT adiciona novas linhas a uma tabela.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'b',
-            texto: 'UPDATE',
-            correta: false,
-            explicacao: 'Incorreta. UPDATE altera linhas existentes.',
+            text: 'UPDATE',
+            correct: false,
+            explanation: 'Incorreta. UPDATE altera linhas existentes.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'c',
-            texto: 'SELECT',
-            correta: true,
-            explicacao:
+            text: 'SELECT',
+            correct: true,
+            explanation:
                 'Correta. SELECT é o comando usado para consultar e recuperar '
                 'dados de uma ou mais tabelas.',
           ),
-          Alternativa(
+          AnswerOption(
             id: 'd',
-            texto: 'DELETE',
-            correta: false,
-            explicacao: 'Incorreta. DELETE remove linhas de uma tabela.',
+            text: 'DELETE',
+            correct: false,
+            explanation: 'Incorreta. DELETE remove linhas de uma tabela.',
           ),
         ],
       ),

@@ -1,67 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/dificuldade.dart';
-import '../../domain/questao.dart';
+import '../../domain/difficulty.dart';
+import '../../domain/question.dart';
 import '../../state/app_state.dart';
-import '../widgets/conteudo_view.dart';
+import '../widgets/content_view.dart';
 
-/// Banco de questões: listar, filtrar e consultar/excluir questões salvas
-/// (requisitos, seção 4.3).
-class BancoTela extends StatefulWidget {
-  const BancoTela({super.key});
+/// Question bank: list, filter and view/delete saved questions
+/// (requirements, section 4.3).
+class QuestionBankScreen extends StatefulWidget {
+  const QuestionBankScreen({super.key});
 
   @override
-  State<BancoTela> createState() => _BancoTelaState();
+  State<QuestionBankScreen> createState() => _QuestionBankScreenState();
 }
 
-class _BancoTelaState extends State<BancoTela> {
-  String? _tema;
-  String? _subtopico;
-  Dificuldade? _dificuldade;
+class _QuestionBankScreenState extends State<QuestionBankScreen> {
+  String? _theme;
+  String? _subtopic;
+  Difficulty? _difficulty;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final temas = state.temas.map((t) => t.nome).toList();
-    final subtopicos =
-        _tema == null ? <String>[] : state.subtopicosDoTema(_tema!);
+    final themes = state.themes.map((t) => t.name).toList();
+    final subtopics =
+        _theme == null ? <String>[] : state.subtopicsOfTheme(_theme!);
 
-    final questoes = state.filtrar(
-      tema: _tema,
-      subtopicos: _subtopico == null ? null : [_subtopico!],
-      dificuldade: _dificuldade,
+    final questions = state.filter(
+      theme: _theme,
+      subtopics: _subtopic == null ? null : [_subtopic!],
+      difficulty: _difficulty,
     );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Banco de questões')),
       body: Column(
         children: [
-          _Filtros(
-            temas: temas,
-            subtopicos: subtopicos,
-            tema: _tema,
-            subtopico: _subtopico,
-            dificuldade: _dificuldade,
-            onTema: (v) => setState(() {
-              _tema = v;
-              _subtopico = null;
+          _Filters(
+            themes: themes,
+            subtopics: subtopics,
+            theme: _theme,
+            subtopic: _subtopic,
+            difficulty: _difficulty,
+            onTheme: (v) => setState(() {
+              _theme = v;
+              _subtopic = null;
             }),
-            onSubtopico: (v) => setState(() => _subtopico = v),
-            onDificuldade: (v) => setState(() => _dificuldade = v),
-            onLimpar: () => setState(() {
-              _tema = null;
-              _subtopico = null;
-              _dificuldade = null;
+            onSubtopic: (v) => setState(() => _subtopic = v),
+            onDifficulty: (v) => setState(() => _difficulty = v),
+            onClear: () => setState(() {
+              _theme = null;
+              _subtopic = null;
+              _difficulty = null;
             }),
           ),
           const Divider(height: 1),
           Expanded(
-            child: questoes.isEmpty
-                ? const _VazioBanco()
+            child: questions.isEmpty
+                ? const _EmptyBank()
                 : ListView.builder(
-                    itemCount: questoes.length,
-                    itemBuilder: (_, i) => _QuestaoTile(questao: questoes[i]),
+                    itemCount: questions.length,
+                    itemBuilder: (_, i) => _QuestionTile(question: questions[i]),
                   ),
           ),
         ],
@@ -70,8 +70,8 @@ class _BancoTelaState extends State<BancoTela> {
   }
 }
 
-class _VazioBanco extends StatelessWidget {
-  const _VazioBanco();
+class _EmptyBank extends StatelessWidget {
+  const _EmptyBank();
 
   @override
   Widget build(BuildContext context) {
@@ -87,27 +87,27 @@ class _VazioBanco extends StatelessWidget {
   }
 }
 
-class _Filtros extends StatelessWidget {
-  final List<String> temas;
-  final List<String> subtopicos;
-  final String? tema;
-  final String? subtopico;
-  final Dificuldade? dificuldade;
-  final ValueChanged<String?> onTema;
-  final ValueChanged<String?> onSubtopico;
-  final ValueChanged<Dificuldade?> onDificuldade;
-  final VoidCallback onLimpar;
+class _Filters extends StatelessWidget {
+  final List<String> themes;
+  final List<String> subtopics;
+  final String? theme;
+  final String? subtopic;
+  final Difficulty? difficulty;
+  final ValueChanged<String?> onTheme;
+  final ValueChanged<String?> onSubtopic;
+  final ValueChanged<Difficulty?> onDifficulty;
+  final VoidCallback onClear;
 
-  const _Filtros({
-    required this.temas,
-    required this.subtopicos,
-    required this.tema,
-    required this.subtopico,
-    required this.dificuldade,
-    required this.onTema,
-    required this.onSubtopico,
-    required this.onDificuldade,
-    required this.onLimpar,
+  const _Filters({
+    required this.themes,
+    required this.subtopics,
+    required this.theme,
+    required this.subtopic,
+    required this.difficulty,
+    required this.onTheme,
+    required this.onSubtopic,
+    required this.onDifficulty,
+    required this.onClear,
   });
 
   @override
@@ -117,7 +117,7 @@ class _Filtros extends StatelessWidget {
       child: Column(
         children: [
           DropdownButtonFormField<String>(
-            initialValue: tema,
+            initialValue: theme,
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Tema',
@@ -125,13 +125,13 @@ class _Filtros extends StatelessWidget {
             ),
             items: [
               const DropdownMenuItem(value: null, child: Text('Todos')),
-              ...temas.map((t) => DropdownMenuItem(value: t, child: Text(t))),
+              ...themes.map((t) => DropdownMenuItem(value: t, child: Text(t))),
             ],
-            onChanged: onTema,
+            onChanged: onTheme,
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            initialValue: subtopico,
+            initialValue: subtopic,
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Subtópico',
@@ -139,17 +139,17 @@ class _Filtros extends StatelessWidget {
             ),
             items: [
               const DropdownMenuItem(value: null, child: Text('Todos')),
-              ...subtopicos
+              ...subtopics
                   .map((s) => DropdownMenuItem(value: s, child: Text(s))),
             ],
-            onChanged: tema == null ? null : onSubtopico,
+            onChanged: theme == null ? null : onSubtopic,
           ),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<Dificuldade>(
-                  initialValue: dificuldade,
+                child: DropdownButtonFormField<Difficulty>(
+                  initialValue: difficulty,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Dificuldade',
@@ -157,15 +157,15 @@ class _Filtros extends StatelessWidget {
                   ),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Todas')),
-                    ...Dificuldade.values.map((d) =>
-                        DropdownMenuItem(value: d, child: Text(d.rotulo))),
+                    ...Difficulty.values.map((d) =>
+                        DropdownMenuItem(value: d, child: Text(d.label))),
                   ],
-                  onChanged: onDificuldade,
+                  onChanged: onDifficulty,
                 ),
               ),
               IconButton(
                 tooltip: 'Limpar filtros',
-                onPressed: onLimpar,
+                onPressed: onClear,
                 icon: const Icon(Icons.filter_alt_off),
               ),
             ],
@@ -176,10 +176,10 @@ class _Filtros extends StatelessWidget {
   }
 }
 
-class _QuestaoTile extends StatelessWidget {
-  final Questao questao;
+class _QuestionTile extends StatelessWidget {
+  final Question question;
 
-  const _QuestaoTile({required this.questao});
+  const _QuestionTile({required this.question});
 
   @override
   Widget build(BuildContext context) {
@@ -187,34 +187,34 @@ class _QuestaoTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ExpansionTile(
         title: Text(
-          questao.enunciado,
+          question.statement,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          '${questao.tema} • ${questao.subtopico} • '
-          '${questao.dificuldade.rotulo}',
+          '${question.theme} • ${question.subtopic} • '
+          '${question.difficulty.label}',
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: ConteudoView(
-              texto: questao.enunciado,
-              tipo: questao.tipoConteudo,
+            child: ContentView(
+              text: question.statement,
+              type: question.contentType,
             ),
           ),
           const SizedBox(height: 12),
-          ...questao.alternativas.map((a) => Padding(
+          ...question.options.map((o) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      a.correta
+                      o.correct
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
-                      color: a.correta ? Colors.green : null,
+                      color: o.correct ? Colors.green : null,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -222,11 +222,10 @@ class _QuestaoTile extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ConteudoView(
-                              texto: a.texto, tipo: a.tipoConteudo),
+                          ContentView(text: o.text, type: o.contentType),
                           const SizedBox(height: 2),
                           Text(
-                            a.explicacao,
+                            o.explanation,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -240,7 +239,7 @@ class _QuestaoTile extends StatelessWidget {
             child: TextButton.icon(
               icon: const Icon(Icons.delete_outline),
               label: const Text('Excluir'),
-              onPressed: () => _confirmarExclusao(context),
+              onPressed: () => _confirmDelete(context),
             ),
           ),
         ],
@@ -248,8 +247,8 @@ class _QuestaoTile extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmarExclusao(BuildContext context) async {
-    final confirmar = await showDialog<bool>(
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Excluir questão'),
@@ -269,8 +268,8 @@ class _QuestaoTile extends StatelessWidget {
         ],
       ),
     );
-    if (confirmar == true && context.mounted) {
-      await context.read<AppState>().excluirQuestao(questao.id);
+    if (confirmed == true && context.mounted) {
+      await context.read<AppState>().deleteQuestion(question.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Questão excluída.')),

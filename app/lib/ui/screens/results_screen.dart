@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/tentativa.dart';
-import '../widgets/conteudo_view.dart';
+import '../../domain/attempt.dart';
+import '../widgets/content_view.dart';
 
-/// Resultados do quiz: totais, percentual de acerto e a lista detalhada de
-/// questões com a alternativa escolhida, a correta e as explicações
-/// (requisitos, seções 4.6 e 15).
-class ResultadosTela extends StatelessWidget {
-  final Tentativa tentativa;
+/// Quiz results: totals, accuracy percentage and the detailed list of
+/// questions with the chosen option, the correct one and the explanations
+/// (requirements, sections 4.6 and 15).
+class ResultsScreen extends StatelessWidget {
+  final Attempt attempt;
 
-  const ResultadosTela({super.key, required this.tentativa});
+  const ResultsScreen({super.key, required this.attempt});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class ResultadosTela extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    '${tentativa.percentualAcerto.toStringAsFixed(0)}%',
+                    '${attempt.accuracyPercent.toStringAsFixed(0)}%',
                     style: theme.textTheme.displaySmall,
                   ),
                   Text('de acerto', style: theme.textTheme.bodyMedium),
@@ -37,17 +37,16 @@ class ResultadosTela extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _Metrica(
-                          valor: '${tentativa.total}', rotulo: 'Respondidas'),
-                      _Metrica(
-                        valor: '${tentativa.acertos}',
-                        rotulo: 'Corretas',
-                        cor: Colors.green,
+                      _Metric(value: '${attempt.total}', label: 'Respondidas'),
+                      _Metric(
+                        value: '${attempt.correctCount}',
+                        label: 'Corretas',
+                        color: Colors.green,
                       ),
-                      _Metrica(
-                        valor: '${tentativa.erros}',
-                        rotulo: 'Incorretas',
-                        cor: Colors.red,
+                      _Metric(
+                        value: '${attempt.wrongCount}',
+                        label: 'Incorretas',
+                        color: Colors.red,
                       ),
                     ],
                   ),
@@ -56,11 +55,10 @@ class ResultadosTela extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Revisão das questões',
-              style: theme.textTheme.titleMedium),
+          Text('Revisão das questões', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          ...tentativa.respostas.asMap().entries.map(
-                (e) => _RespostaCard(indice: e.key + 1, resposta: e.value),
+          ...attempt.answers.asMap().entries.map(
+                (e) => _AnswerCard(index: e.key + 1, answer: e.value),
               ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -74,35 +72,35 @@ class ResultadosTela extends StatelessWidget {
   }
 }
 
-class _Metrica extends StatelessWidget {
-  final String valor;
-  final String rotulo;
-  final Color? cor;
+class _Metric extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color? color;
 
-  const _Metrica({required this.valor, required this.rotulo, this.cor});
+  const _Metric({required this.value, required this.label, this.color});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Text(valor,
-            style: theme.textTheme.headlineSmall?.copyWith(color: cor)),
-        Text(rotulo, style: theme.textTheme.bodySmall),
+        Text(value,
+            style: theme.textTheme.headlineSmall?.copyWith(color: color)),
+        Text(label, style: theme.textTheme.bodySmall),
       ],
     );
   }
 }
 
-class _RespostaCard extends StatelessWidget {
-  final int indice;
-  final RespostaQuiz resposta;
+class _AnswerCard extends StatelessWidget {
+  final int index;
+  final QuizAnswer answer;
 
-  const _RespostaCard({required this.indice, required this.resposta});
+  const _AnswerCard({required this.index, required this.answer});
 
   @override
   Widget build(BuildContext context) {
-    final q = resposta.questao;
+    final q = answer.question;
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -114,29 +112,28 @@ class _RespostaCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  resposta.acertou ? Icons.check_circle : Icons.cancel,
-                  color: resposta.acertou ? Colors.green : Colors.red,
+                  answer.isCorrect ? Icons.check_circle : Icons.cancel,
+                  color: answer.isCorrect ? Colors.green : Colors.red,
                   size: 20,
                 ),
                 const SizedBox(width: 6),
-                Text('Questão $indice',
-                    style: theme.textTheme.titleSmall),
+                Text('Questão $index', style: theme.textTheme.titleSmall),
               ],
             ),
             const SizedBox(height: 8),
-            ConteudoView(texto: q.enunciado, tipo: q.tipoConteudo),
+            ContentView(text: q.statement, type: q.contentType),
             const SizedBox(height: 12),
-            ...q.alternativas.map((a) {
-              final ehEscolhida = a.id == resposta.idAlternativaEscolhida;
-              final ehCorreta = a.id == resposta.idAlternativaCorreta;
+            ...q.options.map((o) {
+              final isChosen = o.id == answer.chosenOptionId;
+              final isCorrect = o.id == answer.correctOptionId;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  color: ehCorreta
+                  color: isCorrect
                       ? Colors.green.withValues(alpha: 0.12)
-                      : (ehEscolhida
+                      : (isChosen
                           ? Colors.red.withValues(alpha: 0.12)
                           : null),
                 ),
@@ -146,20 +143,19 @@ class _RespostaCard extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (ehCorreta)
+                        if (isCorrect)
                           const Icon(Icons.check,
                               size: 16, color: Colors.green)
-                        else if (ehEscolhida)
-                          const Icon(Icons.close,
-                              size: 16, color: Colors.red)
+                        else if (isChosen)
+                          const Icon(Icons.close, size: 16, color: Colors.red)
                         else
                           const SizedBox(width: 16),
                         const SizedBox(width: 6),
                         Expanded(
-                          child: ConteudoView(
-                              texto: a.texto, tipo: a.tipoConteudo),
+                          child:
+                              ContentView(text: o.text, type: o.contentType),
                         ),
-                        if (ehEscolhida)
+                        if (isChosen)
                           Text('  (sua resposta)',
                               style: theme.textTheme.labelSmall),
                       ],
@@ -167,7 +163,7 @@ class _RespostaCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Padding(
                       padding: const EdgeInsets.only(left: 22),
-                      child: Text(a.explicacao,
+                      child: Text(o.explanation,
                           style: theme.textTheme.bodySmall),
                     ),
                   ],
