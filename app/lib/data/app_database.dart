@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import 'tables.dart';
@@ -10,6 +9,10 @@ part 'app_database.g.dart';
 ///
 /// Code generation (`app_database.g.dart`) is produced with:
 ///   dart run build_runner build --delete-conflicting-outputs
+///
+/// Note: this file must stay web-compatible, so it must NOT import
+/// `package:drift/native.dart` (which pulls in `dart:ffi`, unavailable on the
+/// web). The in-memory database used by tests lives under `test/` instead.
 @DriftDatabase(
   tables: [
     Themes,
@@ -23,19 +26,6 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
       : super(executor ?? driftDatabase(name: 'quiztion'));
-
-  /// In-memory database for tests.
-  ///
-  /// Enables `foreign_keys` directly on the raw connection via [setup], which
-  /// is the reliable place to do it: SQLite resets `foreign_keys` to OFF on
-  /// every connection, and the PRAGMA is a no-op inside a transaction, so
-  /// setting it here guarantees ON DELETE CASCADE works in tests.
-  AppDatabase.memory()
-      : super(NativeDatabase.memory(
-          setup: (rawDb) {
-            rawDb.execute('PRAGMA foreign_keys = ON');
-          },
-        ));
 
   @override
   int get schemaVersion => 1;

@@ -5,6 +5,8 @@ import 'package:quiztion/domain/answer_option.dart';
 import 'package:quiztion/domain/difficulty.dart';
 import 'package:quiztion/domain/question.dart';
 
+import '../support/test_database.dart';
+
 // Persistence tests using an in-memory SQLite database (no file, no AI).
 //
 // Prerequisite: run `dart run build_runner build` to generate
@@ -30,7 +32,7 @@ void main() {
   late QuestionRepository repo;
 
   setUp(() {
-    db = AppDatabase.memory();
+    db = createTestDatabase();
     repo = QuestionRepository(db);
   });
 
