@@ -130,7 +130,16 @@ class QuestionRepository {
   }
 
   Future<void> deleteQuestion(String id) async {
-    await (_db.delete(_db.questions)..where((q) => q.id.equals(id))).go();
+    // Delete options and question in a transaction. This does not rely on
+    // SQLite's ON DELETE CASCADE being active (which depends on the
+    // `foreign_keys` pragma being ON for the connection); the schema still
+    // declares the cascade as a safety net.
+    await _db.transaction(() async {
+      await (_db.delete(_db.answerOptions)
+            ..where((o) => o.questionId.equals(id)))
+          .go();
+      await (_db.delete(_db.questions)..where((q) => q.id.equals(id))).go();
+    });
   }
 
   /// Inserts a question with its options atomically (transaction), using
