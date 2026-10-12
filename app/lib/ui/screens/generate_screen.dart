@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../domain/difficulty.dart';
 import '../../state/app_state.dart';
 import '../../state/generation_controller.dart';
+import '../widgets/icon_picker.dart';
 import '../widgets/selector_with_create.dart';
 
 /// "Gerar questões" screen (requirements, sections 4.2 and 5).
@@ -73,7 +74,10 @@ class _GenerateViewState extends State<_GenerateView> {
                 _subtopic = null;
               }),
               onCreate: (name) async {
-                final created = await appState.createTheme(name);
+                // Offer picking an icon for the new theme (floating dialog).
+                final iconId = await showThemeIconPicker(context);
+                final created =
+                    await appState.createTheme(name, icon: iconId);
                 setState(() {
                   _theme = created;
                   _subtopic = null;

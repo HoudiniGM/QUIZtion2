@@ -5,6 +5,8 @@ import 'package:drift/drift.dart';
 class Themes extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
+  // Optional icon identifier from the app's icon library (see ThemeIcons).
+  TextColumn get icon => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

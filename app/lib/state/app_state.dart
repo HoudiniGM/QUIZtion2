@@ -119,7 +119,7 @@ class AppState extends ChangeNotifier {
 
   /// Creates a theme (if a theme with the same name does not already exist)
   /// and returns its name. Reloads the data.
-  Future<String> createTheme(String name) async {
+  Future<String> createTheme(String name, {String? icon}) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
       throw ArgumentError('O nome do tema não pode ser vazio.');
@@ -133,9 +133,41 @@ class AppState extends ChangeNotifier {
       id: _slug(trimmed),
       name: trimmed,
       createdAt: DateTime.now(),
+      icon: icon,
     );
     await reload();
     return trimmed;
+  }
+
+  /// Icon id set for a theme (by name), or null.
+  String? iconOfTheme(String themeName) {
+    final t = _themes.where((t) => t.name == themeName);
+    return t.isEmpty ? null : t.first.icon;
+  }
+
+  Future<void> updateThemeIcon({
+    required String themeName,
+    String? icon,
+  }) async {
+    await _repo.updateThemeIcon(id: _slug(themeName), icon: icon);
+    await reload();
+  }
+
+  Future<void> deleteTheme(String themeName) async {
+    await _repo.deleteTheme(id: _slug(themeName), name: themeName);
+    await reload();
+  }
+
+  Future<void> deleteSubtopic({
+    required String themeName,
+    required String subtopicName,
+  }) async {
+    await _repo.deleteSubtopic(
+      id: '${_slug(themeName)}__${_slug(subtopicName)}',
+      themeName: themeName,
+      subtopicName: subtopicName,
+    );
+    await reload();
   }
 
   /// Creates a subtopic under a theme (idempotent by name) and returns its

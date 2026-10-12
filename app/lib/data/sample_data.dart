@@ -26,7 +26,12 @@ class DataSeeder {
     const theme = 'Java Core';
     const subtopics = ['Collections', 'Exceções', 'Lambdas e Streams'];
 
-    await _repo.insertTheme(id: _slug(theme), name: theme, createdAt: now);
+    await _repo.insertTheme(
+      id: _slug(theme),
+      name: theme,
+      createdAt: now,
+      icon: 'code',
+    );
     for (final sub in subtopics) {
       await _repo.insertSubtopic(
         id: '${_slug(theme)}__${_slug(sub)}',

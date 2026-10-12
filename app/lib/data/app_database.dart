@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
             ));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +55,7 @@ class AppDatabase extends _$AppDatabase {
           //       history is out of scope).
           //   v5: reduced the seed to a single example theme. No schema
           //       change, but the reset re-seeds with the new content.
+          //   v6: themes gained a nullable icon column.
           // NOTE: this drop/recreate on upgrade is acceptable while the only
           // data is seeded examples. Once users create and keep their own
           // themes/questions, replace this with proper per-version migrations

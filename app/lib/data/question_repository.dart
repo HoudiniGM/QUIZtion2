@@ -10,11 +10,15 @@ import 'app_database.dart';
 class ThemeWithSubtopics {
   final String id;
   final String name;
+
+  /// Icon id from the app's icon library (see ThemeIcons), or null.
+  final String? icon;
   final List<SubtopicInfo> subtopics;
 
   const ThemeWithSubtopics({
     required this.id,
     required this.name,
+    required this.icon,
     required this.subtopics,
   });
 }
@@ -51,6 +55,7 @@ class QuestionRepository {
       return ThemeWithSubtopics(
         id: t.id,
         name: t.name,
+        icon: t.icon,
         subtopics: mine
             .map((s) =>
                 SubtopicInfo(id: s.id, themeId: s.themeId, name: s.name))
@@ -59,12 +64,78 @@ class QuestionRepository {
     }).toList();
   }
 
-  Future<void> insertTheme(
-      {required String id, required String name, required DateTime createdAt}) {
+  Future<void> insertTheme({
+    required String id,
+    required String name,
+    required DateTime createdAt,
+    String? icon,
+  }) {
     return _db.into(_db.themes).insert(
-          ThemesCompanion.insert(id: id, name: name, createdAt: createdAt),
+          ThemesCompanion.insert(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            icon: Value(icon),
+          ),
           mode: InsertMode.insertOrIgnore,
         );
+  }
+
+  /// Updates the icon of an existing theme.
+  Future<void> updateThemeIcon({required String id, String? icon}) async {
+    await (_db.update(_db.themes)..where((t) => t.id.equals(id)))
+        .write(ThemesCompanion(icon: Value(icon)));
+  }
+
+  /// Deletes a theme and everything under it (subtopics and questions of that
+  /// theme) in a transaction.
+  Future<void> deleteTheme({required String id, required String name}) async {
+    await _db.transaction(() async {
+      // Delete options of questions in this theme, then the questions.
+      final qIds = await (_db.select(_db.questions)
+            ..where((q) => q.theme.equals(name)))
+          .map((q) => q.id)
+          .get();
+      if (qIds.isNotEmpty) {
+        await (_db.delete(_db.answerOptions)
+              ..where((o) => o.questionId.isIn(qIds)))
+            .go();
+        await (_db.delete(_db.questions)..where((q) => q.theme.equals(name)))
+            .go();
+      }
+      await (_db.delete(_db.subtopics)..where((s) => s.themeId.equals(id)))
+          .go();
+      await (_db.delete(_db.themes)..where((t) => t.id.equals(id))).go();
+    });
+  }
+
+  /// Deletes a subtopic and its questions in a transaction.
+  Future<void> deleteSubtopic({
+    required String id,
+    required String themeName,
+    required String subtopicName,
+  }) async {
+    await _db.transaction(() async {
+      final qIds = await (_db.select(_db.questions)
+            ..where(
+              (q) => q.theme.equals(themeName) &
+                  q.subtopic.equals(subtopicName),
+            ))
+          .map((q) => q.id)
+          .get();
+      if (qIds.isNotEmpty) {
+        await (_db.delete(_db.answerOptions)
+              ..where((o) => o.questionId.isIn(qIds)))
+            .go();
+        await (_db.delete(_db.questions)
+              ..where(
+                (q) => q.theme.equals(themeName) &
+                    q.subtopic.equals(subtopicName),
+              ))
+            .go();
+      }
+      await (_db.delete(_db.subtopics)..where((s) => s.id.equals(id))).go();
+    });
   }
 
   Future<void> insertSubtopic({

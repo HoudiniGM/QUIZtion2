@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../domain/content_type.dart';
 import '../../domain/question.dart';
 import '../../state/app_state.dart';
+import '../theme_icons.dart';
 import '../widgets/content_view.dart';
+import '../widgets/icon_picker.dart';
 
 /// Question bank as a collapsible tree (requirements, section 4.3):
 ///   Theme → (expand) Subtopics → (expand) Questions (collapsed).
@@ -58,18 +60,25 @@ class _ThemeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final subtopics = state.subtopicsOfTheme(themeName);
-    final questionCount =
-        state.filter(theme: themeName).length;
+    final questionCount = state.filter(theme: themeName).length;
+    final iconId = state.iconOfTheme(themeName);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ExpansionTile(
-        leading: Icon(Icons.category_outlined, color: theme.colorScheme.primary),
+        leading: Icon(ThemeIcons.byId(iconId), color: theme.colorScheme.primary),
         title: Text(
           themeName,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text('$questionCount questão(ões)'),
+        trailing: PopupMenuButton<String>(
+          onSelected: (v) => _onThemeMenu(context, v),
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'icon', child: Text('Alterar ícone')),
+            PopupMenuItem(value: 'delete', child: Text('Excluir tema')),
+          ],
+        ),
         childrenPadding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
         children: [
           if (subtopics.isEmpty)
@@ -91,6 +100,60 @@ class _ThemeTile extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _onThemeMenu(BuildContext context, String action) async {
+    if (action == 'icon') {
+      final iconId = await showThemeIconPicker(
+        context,
+        currentIconId: state.iconOfTheme(themeName),
+      );
+      if (iconId != null) {
+        await state.updateThemeIcon(themeName: themeName, icon: iconId);
+      }
+      return;
+    }
+    if (action == 'delete') {
+      final ok = await _confirm(
+        context,
+        title: 'Excluir tema',
+        message:
+            'Excluir o tema "$themeName" remove todos os seus subtópicos e '
+            'questões. Esta ação não pode ser desfeita.',
+      );
+      if (ok == true) {
+        await state.deleteTheme(themeName);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Tema "$themeName" excluído.')),
+          );
+        }
+      }
+    }
+  }
+}
+
+Future<bool?> _confirm(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Excluir'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Level 2: subtopic.
@@ -122,6 +185,35 @@ class _SubtopicTile extends StatelessWidget {
         title: Text(subtopicName),
         subtitle: Text('${questions.length} questão(ões)'),
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        trailing: PopupMenuButton<String>(
+          onSelected: (v) async {
+            if (v == 'delete') {
+              final ok = await _confirm(
+                context,
+                title: 'Excluir subtópico',
+                message:
+                    'Excluir o subtópico "$subtopicName" remove todas as suas '
+                    'questões. Esta ação não pode ser desfeita.',
+              );
+              if (ok == true) {
+                await state.deleteSubtopic(
+                  themeName: themeName,
+                  subtopicName: subtopicName,
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Subtópico "$subtopicName" excluído.'),
+                    ),
+                  );
+                }
+              }
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'delete', child: Text('Excluir subtópico')),
+          ],
+        ),
         childrenPadding: const EdgeInsets.only(left: 8, bottom: 8),
         children: [
           if (questions.isEmpty)
