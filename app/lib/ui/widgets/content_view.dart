@@ -38,6 +38,13 @@ class _CodeBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const codeStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontFamilyFallback: ['Courier New', 'monospace'],
+      fontSize: 13,
+      height: 1.4,
+    );
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -45,16 +52,15 @@ class _CodeBlock extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
+      // Horizontal scroll for long lines, preserving indentation and line
+      // breaks. softWrap is disabled so indentation is not altered; the
+      // horizontal scroll view handles lines wider than the screen.
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: SelectableText(
+        child: Text(
           code,
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontFamilyFallback: ['Courier New', 'monospace'],
-            fontSize: 13,
-            height: 1.4,
-          ),
+          softWrap: false,
+          style: codeStyle,
         ),
       ),
     );
