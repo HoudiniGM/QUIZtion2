@@ -44,13 +44,6 @@ class HomeScreen extends StatelessWidget {
                   enabled: false,
                   onTap: () {},
                 ),
-                _FeatureButton(
-                  icon: Icons.history,
-                  title: 'Histórico',
-                  description: 'Em breve (Etapa 2): tentativas anteriores.',
-                  enabled: false,
-                  onTap: () {},
-                ),
               ],
             ),
     );

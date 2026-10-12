@@ -24,8 +24,11 @@ class QuizAnswer {
   bool get isCorrect => chosenOptionId == correctOptionId;
 }
 
-/// A completed quiz attempt: the set of answers and the metadata needed for
-/// the history (see requirements, sections 14 and 15).
+/// The result of a completed quiz: the set of answers plus quiz metadata.
+///
+/// This is an in-memory value produced by [QuizEngine.finish] and consumed by
+/// the results screen. It is NOT persisted — the app does not keep a history
+/// of attempts (out of scope).
 class Attempt {
   final String id;
   final DateTime date;

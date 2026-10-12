@@ -54,9 +54,11 @@ em português.
 - **themes** — id, name, createdAt.
 - **subtopics** — id, themeId (FK), name, createdAt.
 - **questions** — id, subtopicId, theme, subtopic, statement, contentType (text/code), difficulty (basic/intermediate/advanced), tags (opcional), createdAt, promptVersion (nullable), generationMetadata (nullable).
-- **answer_options** — id, questionId (FK), text, explanation, flag `correct`, position (ordem estável). Cada alternativa mantém sua explicação e identidade mesmo após embaralhamento.
-- **attempts** — id, date, theme, subtopics, total, correctCount (preenchido a partir da Etapa 2).
-- **attempt_answers** — id, attemptId (FK), questionId, chosenOptionId.
+- **answer_options** — questionId (FK) + id (chave composta), optionText, explanation, flag `correct`, position (ordem estável). Cada alternativa mantém sua explicação e identidade mesmo após embaralhamento.
+
+Não há tabelas de tentativas: o **histórico de tentativas está fora do escopo**
+(ver seção 9). O resultado do quiz é exibido uma vez, logo após finalizar, e não
+é persistido.
 
 O modelo é extensível: campos de imagem/diagrama **não** são implementados agora, mas a estrutura permite adicioná-los no futuro sem reescrita (requisitos 10, 11, 21).
 
@@ -74,6 +76,7 @@ O modelo é extensível: campos de imagem/diagrama **não** são implementados a
 - Backend sem autenticação (risco documentado acima).
 - Material complementar aceita apenas texto colado (sem PDF) na primeira versão.
 - Sem imagens/diagramas; sem execução de código; apenas múltipla escolha.
+- **Sem histórico de tentativas** (ver seção 9).
 - App nativo não compilável no ambiente de desenvolvimento assistido (sem Flutter SDK lá); o backend é testável nesse ambiente. Testes do app rodam no ambiente do desenvolvedor.
 
 ## 7. Convenção de idioma no código
@@ -87,3 +90,18 @@ O modelo é extensível: campos de imagem/diagrama **não** são implementados a
 ## 8. Histórico de decisões
 
 - Stack do app migrada de Kotlin nativo → **Flutter**, pois o desenvolvedor não possui/não pode instalar Android Studio e já domina Flutter no VS Code. Flutter atende os requisitos e viabiliza a validação pelo próprio desenvolvedor.
+- **Histórico de tentativas removido do escopo** (ver seção 9), por decisão do responsável pelo produto.
+
+## 9. Escopo: histórico de tentativas (removido)
+
+As seções 4.7 e 15 do documento de requisitos original previam um histórico de
+tentativas (listar tentativas anteriores, com data, tema, subtópicos e
+desempenho). Por decisão do responsável pelo produto, **esse recurso foi
+retirado do escopo — não será implementado agora nem futuramente** por não ser
+o foco do app.
+
+Consequências:
+- O resultado do quiz continua sendo exibido ao final de cada quiz (tela de
+  Resultados), mas **não é salvo**.
+- Não existem as tabelas `attempts`/`attempt_answers`.
+- Não há tela de Histórico.

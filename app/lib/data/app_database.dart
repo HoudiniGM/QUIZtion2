@@ -19,8 +19,6 @@ part 'app_database.g.dart';
     Subtopics,
     Questions,
     AnswerOptions,
-    Attempts,
-    AttemptAnswers,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -38,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
             ));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +51,8 @@ class AppDatabase extends _$AppDatabase {
           //       (option ids collided across questions in v1).
           //   v3: questions gained a nullable code_snippet column so the
           //       statement text is no longer rendered as a code block.
+          //   v4: removed the attempts/attempt_answers tables (quiz attempt
+          //       history is out of scope).
           for (final table in allTables) {
             await m.deleteTable(table.actualTableName);
           }

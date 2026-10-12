@@ -30,9 +30,11 @@ QUIZtion2/
 O projeto é construído de forma incremental (ver `docs/architecture.md`):
 
 - **Etapa 1 — Base do app e quiz local (offline):** concluída e validada. ✅
-- Etapa 2 — Histórico e consistência (próxima).
-- Etapa 3 — Backend e geração por IA.
-- Etapa 4 — Acabamento e confiabilidade.
+- Etapa 2 — Backend e geração por IA (próxima).
+- Etapa 3 — Acabamento e confiabilidade.
+
+> O histórico de tentativas foi **retirado do escopo** (ver `docs/architecture.md`,
+> seção 9): o resultado é mostrado ao final de cada quiz, mas não é salvo.
 
 ## Como rodar o app (Flutter)
 

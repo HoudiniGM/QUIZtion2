@@ -76,31 +76,7 @@ class AnswerOptions extends Table {
   Set<Column> get primaryKey => {questionId, id};
 }
 
-/// Completed quiz attempts (history — populated from Stage 2 on).
-@DataClassName('AttemptRow')
-class Attempts extends Table {
-  TextColumn get id => text()();
-  DateTimeColumn get date => dateTime()();
-  TextColumn get theme => text()();
-  // Serialized list of subtopics (JSON) — simple for the MVP.
-  TextColumn get subtopics => text()();
-  IntColumn get total => integer()();
-  IntColumn get correctCount => integer()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// Individual answers of each attempt, with the data needed to rebuild the
-/// result (see requirements, section 15).
-@DataClassName('AttemptAnswerRow')
-class AttemptAnswers extends Table {
-  TextColumn get id => text()();
-  TextColumn get attemptId =>
-      text().references(Attempts, #id, onDelete: KeyAction.cascade)();
-  TextColumn get questionId => text()();
-  TextColumn get chosenOptionId => text()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
+// Note: there are no tables for quiz attempts. Storing a history of attempts
+// is intentionally out of scope for this app (see docs/architecture.md). The
+// quiz result is shown once, right after finishing a quiz, and is not
+// persisted.
