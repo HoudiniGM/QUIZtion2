@@ -61,9 +61,10 @@ export class QuestionGenerator {
       try {
         rawQuestions = await this._client.generateQuestions(built.prompt);
       } catch (err) {
+        // Keep the log short and safe; the logger also redacts secrets.
         logger.warn(
           `generation attempt ${attempt} failed`,
-          err?.message ?? String(err),
+          shortError(err),
         );
         // Count the shortfall as failures only on the final attempt.
         if (attempt >= MAX_ATTEMPTS) {
@@ -116,6 +117,20 @@ function toSavedQuestion(valid, params, promptVersion) {
     options: valid.options,
     promptVersion,
   };
+}
+
+/**
+ * Extracts a short, single-line description from an error for logging. Avoids
+ * dumping large provider error objects (which could, in some cases, embed
+ * sensitive data). The logger additionally redacts secrets.
+ */
+function shortError(err) {
+  const raw =
+    (err && typeof err === 'object' && 'message' in err
+      ? String(err.message)
+      : String(err)) || 'unknown error';
+  const firstLine = raw.split('\n')[0];
+  return firstLine.length > 200 ? `${firstLine.slice(0, 200)}…` : firstLine;
 }
 
 /** Factory used by the server to build a real, Gemini-backed generator. */
