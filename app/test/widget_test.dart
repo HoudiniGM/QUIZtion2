@@ -30,10 +30,9 @@ void main() {
     // Let the async initialization (seed + reload) complete and settle.
     await tester.pumpAndSettle();
 
-    // The home screen shows the app title and the main feature entries.
+    // The home screen shows the app title and the summary section.
     expect(find.text('QUIZtion'), findsOneWidget);
-    expect(find.text('Novo quiz'), findsOneWidget);
-    expect(find.text('Banco de questões'), findsOneWidget);
+    expect(find.text('Seu acervo'), findsOneWidget);
 
     await db.close();
   });

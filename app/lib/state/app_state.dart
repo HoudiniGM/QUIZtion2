@@ -29,6 +29,20 @@ class AppState extends ChangeNotifier {
 
   int get totalQuestions => _questions.length;
 
+  int get totalThemes => _themes.length;
+
+  int get totalSubtopics =>
+      _themes.fold(0, (sum, t) => sum + t.subtopics.length);
+
+  /// Count of questions per difficulty, for the home summary.
+  Map<Difficulty, int> get questionsByDifficulty {
+    final map = {for (final d in Difficulty.values) d: 0};
+    for (final q in _questions) {
+      map[q.difficulty] = (map[q.difficulty] ?? 0) + 1;
+    }
+    return map;
+  }
+
   /// Initializes: runs the seed (if needed) and loads the data.
   Future<void> initialize() async {
     _loading = true;

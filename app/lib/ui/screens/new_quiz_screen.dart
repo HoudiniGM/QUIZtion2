@@ -95,15 +95,21 @@ class _NewQuizScreenState extends State<NewQuizScreen> {
               label: '$_quantity',
               onChanged: (v) => setState(() => _quantity = v.round()),
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Iniciar quiz'),
-              onPressed:
-                  _selectedSubtopics.isEmpty ? null : () => _start(context),
-            ),
           ],
         ],
+      ),
+      // Fixed action button at the bottom (does not scroll with content).
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton.icon(
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Iniciar quiz'),
+            onPressed: (_theme == null || _selectedSubtopics.isEmpty)
+                ? null
+                : () => _start(context),
+          ),
+        ),
       ),
     );
   }
