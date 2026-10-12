@@ -15,8 +15,19 @@ import { validateGenerateRequest } from './validation/request_validation.js';
 export function createApp({ generator } = {}) {
   const app = express();
 
+  // Allow all origins (personal MVP). Explicitly enable preflight for all
+  // routes so browser (Flutter web) cross-origin POSTs with JSON work.
   app.use(cors());
+  app.options('*', cors());
   app.use(express.json({ limit: '256kb' }));
+
+  // Lightweight request log so it is visible in the terminal whether the
+  // app's requests are reaching the server at all (helps diagnose connection
+  // vs. CORS issues). Does not log bodies/secrets.
+  app.use((req, _res, next) => {
+    logger.info(`${req.method} ${req.path} from ${req.ip}`);
+    next();
+  });
 
   // Health check — never reveals secrets, only whether a key is configured.
   app.get('/health', (_req, res) => {
