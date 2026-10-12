@@ -28,7 +28,9 @@ aplicativo móvel.
 
    Variáveis disponíveis (ver `.env.example`):
    - `GEMINI_API_KEY` — sua chave (obrigatória para gerar questões).
-   - `GEMINI_MODEL` — modelo usado (padrão `gemini-2.5-flash`, free tier).
+   - `GEMINI_MODEL` — modelo usado (padrão `gemini-3.8-flash`, com free tier
+     de ~20 req/dia). Para mais requisições diárias, pode-se usar um modelo
+     `flash-lite` (ex.: `gemini-3.5-flash-lite`), de menor qualidade.
    - `PORT` — porta HTTP local (padrão `3000`).
    - `MAX_QUESTIONS_PER_REQUEST` — limite de questões por requisição (padrão 10).
 
