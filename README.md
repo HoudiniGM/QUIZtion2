@@ -29,8 +29,8 @@ QUIZtion2/
 
 O projeto é construído de forma incremental (ver `docs/architecture.md`):
 
-- **Etapa 1 — Base do app e quiz local (offline):** em andamento.
-- Etapa 2 — Histórico e consistência.
+- **Etapa 1 — Base do app e quiz local (offline):** concluída e validada. ✅
+- Etapa 2 — Histórico e consistência (próxima).
 - Etapa 3 — Backend e geração por IA.
 - Etapa 4 — Acabamento e confiabilidade.
 
