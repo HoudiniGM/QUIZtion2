@@ -64,10 +64,10 @@ export class GeminiClient {
   }
 
   /**
-   * Sends the prompt and returns parsed raw questions: Array<object>.
-   * Throws on network/API errors, timeout, or if the response is not parseable.
+   * Sends a prompt expecting structured JSON matching [schema] and returns the
+   * parsed object. Throws on network/API errors, timeout, or invalid JSON.
    */
-  async generateQuestions(prompt) {
+  async generateJson(prompt, schema, { temperature = 0.7 } = {}) {
     const started = Date.now();
     logger.info(`gemini call started (model=${this._model})`);
 
@@ -79,8 +79,8 @@ export class GeminiClient {
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
-            responseSchema: RESPONSE_SCHEMA,
-            temperature: 0.7,
+            responseSchema: schema,
+            temperature,
             // Gemini 3.x models reason internally by default, which can add
             // very high latency. "low" keeps responses fast. (On Gemini 3,
             // thinkingLevel is the supported control; thinkingBudget is
@@ -95,20 +95,51 @@ export class GeminiClient {
     }
 
     const text = response?.text ?? '';
-    let parsed;
     try {
-      parsed = JSON.parse(text);
+      return JSON.parse(text);
     } catch {
       throw new Error('A resposta da IA não é um JSON válido.');
     }
+  }
 
+  /**
+   * Sends the prompt and returns parsed raw questions: Array<object>.
+   */
+  async generateQuestions(prompt) {
+    const parsed = await this.generateJson(prompt, RESPONSE_SCHEMA);
     const questions = parsed?.questions;
     if (!Array.isArray(questions)) {
       throw new Error('A resposta da IA não contém uma lista de questões.');
     }
     return questions;
   }
+
+  /**
+   * Classifies free text into a suggested theme and topic.
+   * Returns { theme, topic } (strings).
+   */
+  async classify(prompt) {
+    const parsed = await this.generateJson(prompt, CLASSIFY_SCHEMA, {
+      temperature: 0.2,
+    });
+    const theme = typeof parsed?.theme === 'string' ? parsed.theme.trim() : '';
+    const topic = typeof parsed?.topic === 'string' ? parsed.topic.trim() : '';
+    if (theme === '' || topic === '') {
+      throw new Error('A IA não retornou tema e tópico válidos.');
+    }
+    return { theme, topic };
+  }
 }
+
+/// Schema for the classification response.
+const CLASSIFY_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    theme: { type: Type.STRING },
+    topic: { type: Type.STRING },
+  },
+  required: ['theme', 'topic'],
+};
 
 /** Rejects if the promise does not settle within `ms` milliseconds. */
 function withTimeout(promise, ms) {

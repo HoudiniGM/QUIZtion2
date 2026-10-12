@@ -12,15 +12,18 @@ import { hasGeminiKey } from '../src/config.js';
 import { logger } from '../src/logger.js';
 
 let generator;
+let classifier;
 if (hasGeminiKey()) {
-  const mod = await import('../src/generation/question_generator.js');
-  generator = mod.createGeminiQuestionGenerator();
+  const genMod = await import('../src/generation/question_generator.js');
+  generator = genMod.createGeminiQuestionGenerator();
+  const classifyMod = await import('../src/generation/classifier.js');
+  classifier = classifyMod.createGeminiClassifier();
 } else {
   logger.warn(
-    'GEMINI_API_KEY not set; /generate will be unavailable until configured.',
+    'GEMINI_API_KEY not set; /generate and /classify will be unavailable.',
   );
 }
 
-const app = createApp({ generator });
+const app = createApp({ generator, classifier });
 
 export default app;

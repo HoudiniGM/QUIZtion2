@@ -111,9 +111,55 @@ class GenerationController extends ChangeNotifier {
     }
   }
 
+  bool _suggesting = false;
+  bool get suggesting => _suggesting;
+
+  /// Asks the backend to suggest a theme/topic from a free-text description.
+  /// Returns the suggestion, or null on failure (sets an error message).
+  Future<ThemeSuggestion?> suggest(String text) async {
+    if (_suggesting) return null;
+    final baseUrl = _appState.settings.backendUrl;
+    if (baseUrl.isEmpty) {
+      _status = GenerationStatus.error;
+      _message =
+          'Configure o endereço do backend nas Configurações antes de usar a '
+          'sugestão.';
+      notifyListeners();
+      return null;
+    }
+
+    _suggesting = true;
+    _message = null;
+    _status = GenerationStatus.idle;
+    notifyListeners();
+
+    final api = _apiFactory(baseUrl);
+    try {
+      final suggestion = await api.classify(
+        text: text,
+        existingThemes: _appState.existingThemeTopics(),
+      );
+      return suggestion;
+    } on GenerationException catch (e) {
+      _status = GenerationStatus.error;
+      _message = e.message;
+      return null;
+    } catch (_) {
+      _status = GenerationStatus.error;
+      _message = 'Não foi possível obter uma sugestão agora.';
+      return null;
+    } finally {
+      api.close();
+      _suggesting = false;
+      notifyListeners();
+    }
+  }
+
   void reset() {
     // No-op if already idle with no message (avoids needless rebuilds).
-    if (_status == GenerationStatus.idle && _message == null) return;
+    if (_status == GenerationStatus.idle && _message == null && !_suggesting) {
+      return;
+    }
     _status = GenerationStatus.idle;
     _message = null;
     _savedCount = 0;

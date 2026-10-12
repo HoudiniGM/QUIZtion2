@@ -3,6 +3,7 @@ import cors from 'cors';
 
 import { hasGeminiKey } from './config.js';
 import { logger } from './logger.js';
+import { validateClassifyRequest } from './validation/classify_validation.js';
 import { validateGenerateRequest } from './validation/request_validation.js';
 
 /**
@@ -12,7 +13,7 @@ import { validateGenerateRequest } from './validation/request_validation.js';
  * for the real Gemini-backed implementation in production. It must expose:
  *   async generate(params) -> { saved: Question[], failed: number, promptVersion }
  */
-export function createApp({ generator } = {}) {
+export function createApp({ generator, classifier } = {}) {
   const app = express();
 
   // Allow all origins (personal MVP). Explicitly enable preflight for all
@@ -71,6 +72,36 @@ export function createApp({ generator } = {}) {
         error: 'generation_failed',
         messages: [
           'Não foi possível gerar as questões agora. Tente novamente.',
+        ],
+      });
+    }
+  });
+
+  app.post('/classify', async (req, res) => {
+    const result = validateClassifyRequest(req.body);
+    if (!result.valid) {
+      return res.status(400).json({
+        error: 'validation_error',
+        messages: result.errors,
+      });
+    }
+
+    if (!classifier) {
+      return res.status(503).json({
+        error: 'classifier_unavailable',
+        messages: ['O serviço de sugestão não está disponível no momento.'],
+      });
+    }
+
+    try {
+      const suggestion = await classifier.classify(result.value);
+      return res.status(200).json(suggestion);
+    } catch (err) {
+      logger.error('classify_failed', err?.message ?? String(err));
+      return res.status(502).json({
+        error: 'classify_failed',
+        messages: [
+          'Não foi possível sugerir um tema agora. Tente novamente.',
         ],
       });
     }

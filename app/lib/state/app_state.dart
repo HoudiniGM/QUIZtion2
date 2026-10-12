@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/generation_api.dart';
 import '../data/question_repository.dart';
 import '../data/sample_data.dart';
 import '../data/settings_repository.dart';
@@ -101,6 +102,16 @@ class AppState extends ChangeNotifier {
       await _repo.insertQuestion(q);
     }
     await reload();
+  }
+
+  /// Existing themes with their topic names, for the classify endpoint.
+  List<ThemeTopics> existingThemeTopics() {
+    return _themes
+        .map((t) => ThemeTopics(
+              theme: t.name,
+              topics: t.subtopics.map((s) => s.name).toList(),
+            ))
+        .toList();
   }
 
   /// Short statement summaries of existing questions for a theme/subtopic,

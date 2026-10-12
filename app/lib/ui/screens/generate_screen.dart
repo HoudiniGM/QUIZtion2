@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/generation_api.dart';
 import '../../domain/difficulty.dart';
 import '../../state/app_state.dart';
 import '../../state/generation_controller.dart';
@@ -76,6 +77,11 @@ class _GenerateViewState extends State<_GenerateView> {
           padding: const EdgeInsets.all(16),
           children: [
             if (!appState.settings.hasBackendUrl) const _BackendWarning(),
+            _SuggestSection(
+              controller: controller,
+              onSuggested: _applySuggestion,
+            ),
+            const SizedBox(height: 12),
             SelectorWithCreate(
               label: 'Tema *',
               createLabel: 'Criar tema',
@@ -200,6 +206,20 @@ class _GenerateViewState extends State<_GenerateView> {
       material: _materialController.text,
     );
   }
+
+  /// Pre-fills the theme/topic from an AI suggestion. If the suggested
+  /// theme/topic does not exist yet, it is created so it becomes selectable
+  /// (the user still chooses difficulty/quantity and presses Gerar).
+  Future<void> _applySuggestion(ThemeSuggestion s) async {
+    final appState = context.read<AppState>();
+    final theme = await appState.createTheme(s.theme);
+    final topic = await appState.createSubtopic(theme: theme, name: s.topic);
+    if (!mounted) return;
+    setState(() {
+      _theme = theme;
+      _subtopic = topic;
+    });
+  }
 }
 
 class _BackendWarning extends StatelessWidget {
@@ -267,5 +287,96 @@ class _StatusBanner extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// A collapsible helper: the user describes what they want to study and the AI
+/// suggests a theme/topic, which pre-fills the form.
+class _SuggestSection extends StatefulWidget {
+  final GenerationController controller;
+  final Future<void> Function(ThemeSuggestion) onSuggested;
+
+  const _SuggestSection({required this.controller, required this.onSuggested});
+
+  @override
+  State<_SuggestSection> createState() => _SuggestSectionState();
+}
+
+class _SuggestSectionState extends State<_SuggestSection> {
+  final _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: ExpansionTile(
+        leading: const Icon(Icons.help_outline),
+        title: const Text('Não sabe o tema?'),
+        subtitle: const Text('Descreva o que quer treinar e a IA sugere.'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          TextField(
+            controller: _textController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: 'Ex.: quero treinar herança e polimorfismo',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              icon: widget.controller.suggesting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_fix_high),
+              label: Text(
+                widget.controller.suggesting ? 'Sugerindo...' : 'Sugerir',
+              ),
+              onPressed: widget.controller.suggesting
+                  ? null
+                  : () => _onSuggest(context),
+            ),
+          ),
+          if (widget.controller.status == GenerationStatus.error &&
+              widget.controller.message != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                widget.controller.message!,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onSuggest(BuildContext context) async {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+    final suggestion = await widget.controller.suggest(text);
+    if (suggestion != null) {
+      await widget.onSuggested(suggestion);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sugestão: ${suggestion.theme} › ${suggestion.topic}',
+            ),
+          ),
+        );
+      }
+    }
   }
 }

@@ -185,10 +185,91 @@ class GenerationApi {
     );
   }
 
+  /// Asks the backend to classify a free-text study description into a
+  /// suggested theme and topic. Throws [GenerationException] on failure.
+  Future<ThemeSuggestion> classify({
+    required String text,
+    List<ThemeTopics> existingThemes = const [],
+  }) async {
+    final uri = Uri.parse('${_normalizedBase()}/classify');
+    final body = jsonEncode({
+      'text': text,
+      'existingThemes': existingThemes
+          .map((e) => {'theme': e.theme, 'topics': e.topics})
+          .toList(),
+    });
+
+    http.Response response;
+    try {
+      response = await _client
+          .post(uri,
+              headers: {'Content-Type': 'application/json'}, body: body)
+          .timeout(timeout);
+    } on TimeoutException {
+      throw const GenerationException(
+        'O servidor demorou para responder. Tente novamente.',
+      );
+    } catch (_) {
+      throw const GenerationException(
+        'Não foi possível conectar ao servidor. Verifique sua conexão e o '
+        'endereço do backend nas Configurações. Dica: para um backend local, '
+        'use "http://" (e não "https://").',
+      );
+    }
+
+    Map<String, dynamic> json;
+    try {
+      json = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw const GenerationException(
+        'O servidor retornou uma resposta inválida.',
+      );
+    }
+
+    if (response.statusCode != 200) {
+      final messages = (json['messages'] as List?)?.cast<String>() ?? const [];
+      throw GenerationException(
+        messages.isNotEmpty
+            ? messages.join('\n')
+            : 'Não foi possível sugerir um tema agora. Tente novamente.',
+      );
+    }
+
+    return ThemeSuggestion(
+      theme: json['theme'] as String,
+      topic: json['topic'] as String,
+      themeExists: json['themeExists'] == true,
+      topicExists: json['topicExists'] == true,
+    );
+  }
+
   String _normalizedBase() {
     final b = baseUrl.trim();
     return b.endsWith('/') ? b.substring(0, b.length - 1) : b;
   }
 
   void close() => _client.close();
+}
+
+/// A theme with its topic names, sent to the backend to help avoid duplicates
+/// when classifying.
+class ThemeTopics {
+  final String theme;
+  final List<String> topics;
+  const ThemeTopics({required this.theme, required this.topics});
+}
+
+/// The backend's suggestion for a free-text description.
+class ThemeSuggestion {
+  final String theme;
+  final String topic;
+  final bool themeExists;
+  final bool topicExists;
+
+  const ThemeSuggestion({
+    required this.theme,
+    required this.topic,
+    required this.themeExists,
+    required this.topicExists,
+  });
 }

@@ -110,3 +110,53 @@ describe('POST /generate behavior', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/AIza/);
   });
 });
+
+describe('POST /classify', () => {
+  it('rejects an empty description', async () => {
+    const app = createApp({
+      classifier: { classify: async () => ({}) },
+    });
+    const res = await request(app).post('/classify').send({ text: '' });
+    expect(res.status).toBe(400);
+  });
+
+  it('responds 503 when no classifier is configured', async () => {
+    const app = createApp({});
+    const res = await request(app)
+      .post('/classify')
+      .send({ text: 'herança e polimorfismo' });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('classifier_unavailable');
+  });
+
+  it('returns the suggested theme and topic', async () => {
+    const classifier = {
+      classify: jest.fn(async () => ({
+        theme: 'Java Core',
+        topic: 'Collections',
+        themeExists: true,
+        topicExists: true,
+      })),
+    };
+    const app = createApp({ classifier });
+    const res = await request(app)
+      .post('/classify')
+      .send({ text: 'listas e conjuntos' });
+    expect(res.status).toBe(200);
+    expect(res.body.theme).toBe('Java Core');
+    expect(res.body.topic).toBe('Collections');
+    expect(res.body.themeExists).toBe(true);
+  });
+
+  it('returns 502 when the classifier throws', async () => {
+    const classifier = {
+      classify: async () => {
+        throw new Error('down');
+      },
+    };
+    const app = createApp({ classifier });
+    const res = await request(app).post('/classify').send({ text: 'x' });
+    expect(res.status).toBe(502);
+    expect(res.body.error).toBe('classify_failed');
+  });
+});

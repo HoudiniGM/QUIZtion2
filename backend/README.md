@@ -64,6 +64,15 @@ curl -X POST http://localhost:3000/generate \
 A resposta inclui `savedCount`, `failedCount` e `requested` (geração parcial é
 reportada honestamente), além das questões em `saved`.
 
+Sugestão de tema/tópico a partir de texto livre (`POST /classify`):
+
+```bash
+curl -X POST http://localhost:3000/classify \
+  -H "Content-Type: application/json" \
+  -d '{"text":"quero treinar herança e polimorfismo","existingThemes":[]}'
+# { "theme": "...", "topic": "...", "themeExists": false, "topicExists": false }
+```
+
 ## Testes
 
 ```bash
