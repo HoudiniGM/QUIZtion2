@@ -6,6 +6,7 @@ import 'data/question_repository.dart';
 import 'data/settings_repository.dart';
 import 'state/app_state.dart';
 import 'ui/app_router.dart';
+import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,16 +48,8 @@ class _AppRootState extends State<_AppRoot> {
     return MaterialApp.router(
       title: 'QUIZtion',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        useMaterial3: true,
-        brightness: Brightness.dark,
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: _router,
     );
   }

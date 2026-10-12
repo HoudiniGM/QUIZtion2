@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
             ));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +53,12 @@ class AppDatabase extends _$AppDatabase {
           //       statement text is no longer rendered as a code block.
           //   v4: removed the attempts/attempt_answers tables (quiz attempt
           //       history is out of scope).
+          //   v5: reduced the seed to a single example theme. No schema
+          //       change, but the reset re-seeds with the new content.
+          // NOTE: this drop/recreate on upgrade is acceptable while the only
+          // data is seeded examples. Once users create and keep their own
+          // themes/questions, replace this with proper per-version migrations
+          // so their data is preserved.
           for (final table in allTables) {
             await m.deleteTable(table.actualTableName);
           }

@@ -3,12 +3,10 @@ import '../domain/difficulty.dart';
 import '../domain/question.dart';
 import 'question_repository.dart';
 
-/// Populates the local database, on first run, with suggested themes and
-/// subtopics (requirements, section 3) and a small set of example questions —
-/// so the quiz flow works offline, without AI.
-///
-/// The examples do NOT limit the use of the app: the user can freely create
-/// their own themes and subtopics.
+/// Populates the local database, on first run, with a single example theme and
+/// a few questions, so the quiz flow works offline out of the box. The user is
+/// free to create their own themes and subtopics and to generate more
+/// questions by AI.
 class DataSeeder {
   final QuestionRepository _repo;
 
@@ -24,79 +22,18 @@ class DataSeeder {
   Future<void> seed() async {
     final now = DateTime(2026, 1, 1);
 
-    // Theme -> suggested subtopics structure. Content is user-facing (pt-BR).
-    final structure = <String, List<String>>{
-      'Java Core': [
-        'Sintaxe, tipos e operadores',
-        'Estruturas de controle',
-        'Strings e arrays',
-        'Collections',
-        'Generics',
-        'Exceções',
-        'Lambdas e Streams',
-        'Optional',
-        'Enums e Records',
-        'Concorrência (noções básicas)',
-        'JVM e memória',
-      ],
-      'Orientação a Objetos': [
-        'Classes e objetos',
-        'Encapsulamento',
-        'Herança',
-        'Polimorfismo',
-        'Abstração',
-        'Interfaces e classes abstratas',
-        'Composição',
-        'Princípios SOLID',
-      ],
-      'Spring e Backend': [
-        'Injeção de dependência',
-        'Spring Boot',
-        'Configuração e profiles',
-        'Spring MVC',
-        'APIs REST',
-        'Validação',
-        'Tratamento global de exceções',
-        'Spring Data JPA',
-        'Autenticação e autorização (noções básicas)',
-      ],
-      'Bancos de Dados': [
-        'SQL',
-        'SELECT, JOIN e agregações',
-        'Chaves e relacionamentos',
-        'Índices',
-        'Transações',
-        'Normalização',
-        'JPA e Hibernate',
-      ],
-      'Testes': [
-        'JUnit',
-        'Mockito',
-        'Testes unitários e de integração',
-        'TDD',
-      ],
-      'Arquitetura e Ferramentas': [
-        'Camadas de aplicações backend',
-        'DTOs e entidades',
-        'Princípios de arquitetura',
-        'Git',
-        'Maven e Gradle',
-        'HTTP e códigos de status',
-        'Estruturas de dados e algoritmos básicos',
-      ],
-    };
+    // A single example theme with three subtopics (pt-BR, user-facing).
+    const theme = 'Java Core';
+    const subtopics = ['Collections', 'Exceções', 'Lambdas e Streams'];
 
-    for (final entry in structure.entries) {
-      final theme = entry.key;
-      await _repo.insertTheme(id: _slug(theme), name: theme, createdAt: now);
-      for (final sub in entry.value) {
-        await _repo.insertSubtopic(
-          id: '${_slug(theme)}__${_slug(sub)}',
-          themeId: _slug(theme),
-          name: sub,
-          createdAt: now,
-        );
-      }
+    await _repo.insertTheme(id: _slug(theme), name: theme, createdAt: now);
+    for (final sub in subtopics) {
+      await _repo.insertSubtopic(
+        id: '${_slug(theme)}__${_slug(sub)}',
+        themeId: _slug(theme),
+        name: sub,
+        createdAt: now,
+      );
     }
 
     for (final q in _exampleQuestions(now)) {
@@ -106,7 +43,7 @@ class DataSeeder {
 
   List<Question> _exampleQuestions(DateTime now) {
     return [
-      // --- Java / Collections — Basic (example from section 8.1) ---
+      // --- Collections — Basic (example from requirements, section 8.1) ---
       Question(
         id: 'seed-collections-basic-1',
         theme: 'Java Core',
@@ -152,13 +89,12 @@ class DataSeeder {
         ],
       ),
 
-      // --- Java / Collections — Intermediate (example from section 8.2) ---
+      // --- Collections — Intermediate (example from section 8.2) ---
       Question(
         id: 'seed-collections-intermediate-1',
         theme: 'Java Core',
         subtopic: 'Collections',
-        statement:
-            'Considere o código abaixo. Qual é o resultado esperado?',
+        statement: 'Considere o código abaixo. Qual é o resultado esperado?',
         codeSnippet: 'List<String> nomes = new ArrayList<>();\n'
             'nomes.add("Ana");\n'
             'nomes.add("Bruno");\n'
@@ -179,8 +115,7 @@ class DataSeeder {
           ),
           AnswerOption(
             id: 'b',
-            text:
-                '3, porque o conjunto preserva todos os elementos da lista.',
+            text: '3, porque o conjunto preserva todos os elementos da lista.',
             correct: false,
             explanation:
                 'Incorreta. O Set não mantém duplicados; a quantidade pode '
@@ -188,8 +123,7 @@ class DataSeeder {
           ),
           AnswerOption(
             id: 'c',
-            text:
-                '2, porque o conjunto mantém a ordem e remove apenas '
+            text: '2, porque o conjunto mantém a ordem e remove apenas '
                 'duplicatas consecutivas.',
             correct: false,
             explanation:
@@ -198,8 +132,7 @@ class DataSeeder {
           ),
           AnswerOption(
             id: 'd',
-            text:
-                'O código não compila, pois não dá para criar HashSet de '
+            text: 'O código não compila, pois não dá para criar HashSet de '
                 'uma List.',
             correct: false,
             explanation:
@@ -209,7 +142,7 @@ class DataSeeder {
         ],
       ),
 
-      // --- Java / Collections — Advanced (example from section 8.3) ---
+      // --- Collections — Advanced (example from section 8.3) ---
       Question(
         id: 'seed-collections-advanced-1',
         theme: 'Java Core',
@@ -265,90 +198,195 @@ class DataSeeder {
         ],
       ),
 
-      // --- Object Orientation / Encapsulation — Basic ---
+      // --- Exceções — Basic ---
       Question(
-        id: 'seed-oo-encapsulation-basic-1',
-        theme: 'Orientação a Objetos',
-        subtopic: 'Encapsulamento',
+        id: 'seed-excecoes-basic-1',
+        theme: 'Java Core',
+        subtopic: 'Exceções',
         statement:
-            'Qual é o principal objetivo do encapsulamento na orientação a '
-            'objetos?',
+            'Em Java, qual bloco é executado independentemente de uma exceção '
+            'ter sido lançada ou não, sendo útil para liberar recursos?',
         difficulty: Difficulty.basic,
         createdAt: now,
         options: const [
           AnswerOption(
             id: 'a',
-            text:
-                'Proteger o estado interno de um objeto, controlando o acesso '
-                'por meio de métodos.',
-            correct: true,
+            text: 'catch',
+            correct: false,
             explanation:
-                'Correta. O encapsulamento restringe o acesso direto aos '
-                'dados e expõe um comportamento controlado.',
+                'Incorreta. O catch só executa quando uma exceção compatível '
+                'é capturada.',
           ),
           AnswerOption(
             id: 'b',
-            text:
-                'Permitir que uma classe herde atributos e métodos de outra.',
-            correct: false,
+            text: 'finally',
+            correct: true,
             explanation:
-                'Incorreta. Isso descreve herança, não encapsulamento.',
+                'Correta. O finally executa sempre, ocorrendo exceção ou não, '
+                'sendo comum para fechar/liberar recursos.',
           ),
           AnswerOption(
             id: 'c',
-            text:
-                'Permitir que um mesmo método se comporte de formas diferentes.',
+            text: 'throw',
             correct: false,
-            explanation: 'Incorreta. Isso descreve polimorfismo.',
+            explanation:
+                'Incorreta. throw é usado para lançar uma exceção, não para '
+                'executar código ao final.',
           ),
           AnswerOption(
             id: 'd',
-            text:
-                'Dividir um sistema em camadas independentes de infraestrutura.',
+            text: 'try',
             correct: false,
             explanation:
-                'Incorreta. Isso se refere a arquitetura em camadas, não a '
-                'encapsulamento.',
+                'Incorreta. O try delimita o código monitorado, mas não é o '
+                'bloco garantido de finalização.',
           ),
         ],
       ),
 
-      // --- Databases / SQL — Basic ---
+      // --- Exceções — Intermediate ---
       Question(
-        id: 'seed-sql-basic-1',
-        theme: 'Bancos de Dados',
-        subtopic: 'SQL',
+        id: 'seed-excecoes-intermediate-1',
+        theme: 'Java Core',
+        subtopic: 'Exceções',
         statement:
-            'Qual comando SQL é utilizado para recuperar dados de uma tabela?',
+            'Qual é a principal diferença entre exceções checadas (checked) e '
+            'não checadas (unchecked) em Java?',
+        difficulty: Difficulty.intermediate,
+        createdAt: now,
+        options: const [
+          AnswerOption(
+            id: 'a',
+            text:
+                'Exceções checadas devem ser tratadas ou declaradas; as não '
+                'checadas (RuntimeException) não exigem isso.',
+            correct: true,
+            explanation:
+                'Correta. O compilador obriga tratar/declarar exceções '
+                'checadas; as unchecked estendem RuntimeException e não têm '
+                'essa exigência.',
+          ),
+          AnswerOption(
+            id: 'b',
+            text:
+                'Exceções não checadas não podem ser capturadas com try/catch.',
+            correct: false,
+            explanation:
+                'Incorreta. Qualquer exceção pode ser capturada com try/catch, '
+                'inclusive as unchecked.',
+          ),
+          AnswerOption(
+            id: 'c',
+            text: 'Exceções checadas sempre encerram a aplicação.',
+            correct: false,
+            explanation:
+                'Incorreta. Se tratadas adequadamente, não encerram a '
+                'aplicação.',
+          ),
+          AnswerOption(
+            id: 'd',
+            text:
+                'Não há diferença prática; a distinção é apenas de nomenclatura.',
+            correct: false,
+            explanation:
+                'Incorreta. A diferença afeta a obrigatoriedade de tratamento '
+                'imposta pelo compilador.',
+          ),
+        ],
+      ),
+
+      // --- Lambdas e Streams — Basic ---
+      Question(
+        id: 'seed-streams-basic-1',
+        theme: 'Java Core',
+        subtopic: 'Lambdas e Streams',
+        statement:
+            'Em uma Stream do Java, qual operação é usada para transformar '
+            'cada elemento em outro valor (por exemplo, aplicar uma função a '
+            'cada item)?',
         difficulty: Difficulty.basic,
         createdAt: now,
         options: const [
           AnswerOption(
             id: 'a',
-            text: 'INSERT',
+            text: 'filter',
             correct: false,
             explanation:
-                'Incorreta. INSERT adiciona novas linhas a uma tabela.',
+                'Incorreta. filter seleciona elementos conforme um predicado, '
+                'não os transforma.',
           ),
           AnswerOption(
             id: 'b',
-            text: 'UPDATE',
-            correct: false,
-            explanation: 'Incorreta. UPDATE altera linhas existentes.',
+            text: 'map',
+            correct: true,
+            explanation:
+                'Correta. map aplica uma função a cada elemento, produzindo um '
+                'novo elemento correspondente.',
           ),
           AnswerOption(
             id: 'c',
-            text: 'SELECT',
-            correct: true,
+            text: 'forEach',
+            correct: false,
             explanation:
-                'Correta. SELECT é o comando usado para consultar e recuperar '
-                'dados de uma ou mais tabelas.',
+                'Incorreta. forEach apenas consome os elementos, sem produzir '
+                'uma nova stream transformada.',
           ),
           AnswerOption(
             id: 'd',
-            text: 'DELETE',
+            text: 'reduce',
             correct: false,
-            explanation: 'Incorreta. DELETE remove linhas de uma tabela.',
+            explanation:
+                'Incorreta. reduce combina os elementos em um único resultado, '
+                'não transforma item a item.',
+          ),
+        ],
+      ),
+
+      // --- Lambdas e Streams — Intermediate ---
+      Question(
+        id: 'seed-streams-intermediate-1',
+        theme: 'Java Core',
+        subtopic: 'Lambdas e Streams',
+        statement: 'Considere o código abaixo. Qual é a saída impressa?',
+        codeSnippet: 'List<Integer> nums = List.of(1, 2, 3, 4, 5);\n'
+            'int soma = nums.stream()\n'
+            '    .filter(n -> n % 2 == 0)\n'
+            '    .mapToInt(Integer::intValue)\n'
+            '    .sum();\n'
+            'System.out.println(soma);',
+        difficulty: Difficulty.intermediate,
+        createdAt: now,
+        options: const [
+          AnswerOption(
+            id: 'a',
+            text: '6',
+            correct: true,
+            explanation:
+                'Correta. O filter mantém apenas os pares (2 e 4) e sum() '
+                'resulta em 6.',
+          ),
+          AnswerOption(
+            id: 'b',
+            text: '15',
+            correct: false,
+            explanation:
+                'Incorreta. 15 seria a soma de todos os elementos, mas o '
+                'filter remove os ímpares.',
+          ),
+          AnswerOption(
+            id: 'c',
+            text: '9',
+            correct: false,
+            explanation:
+                'Incorreta. 9 seria a soma dos ímpares (1+3+5), o oposto do '
+                'filtro aplicado.',
+          ),
+          AnswerOption(
+            id: 'd',
+            text: '0',
+            correct: false,
+            explanation:
+                'Incorreta. Há elementos pares na lista, então a soma não é 0.',
           ),
         ],
       ),

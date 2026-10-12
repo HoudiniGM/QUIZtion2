@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../domain/difficulty.dart';
 import '../../state/app_state.dart';
 import '../../state/generation_controller.dart';
+import '../widgets/selector_with_create.dart';
 
 /// "Gerar questões" screen (requirements, sections 4.2 and 5).
 ///
@@ -60,37 +61,41 @@ class _GenerateViewState extends State<_GenerateView> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (!appState.settings.hasBackendUrl)
-              const _BackendWarning(),
-            DropdownButtonFormField<String>(
-              initialValue: _theme,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Tema *',
-                border: OutlineInputBorder(),
-              ),
-              items: themes
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) => setState(() {
+            if (!appState.settings.hasBackendUrl) const _BackendWarning(),
+            SelectorWithCreate(
+              label: 'Tema *',
+              createLabel: 'Criar tema',
+              options: themes,
+              value: _theme,
+              onSelected: (v) => setState(() {
                 _theme = v;
                 _subtopic = null;
               }),
+              onCreate: (name) async {
+                final created = await appState.createTheme(name);
+                setState(() {
+                  _theme = created;
+                  _subtopic = null;
+                });
+                return created;
+              },
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _subtopic,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Subtópico *',
-                border: OutlineInputBorder(),
-              ),
-              items: subtopics
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: _theme == null
-                  ? null
-                  : (v) => setState(() => _subtopic = v),
+            SelectorWithCreate(
+              label: 'Subtópico *',
+              createLabel: 'Criar subtópico',
+              options: subtopics,
+              value: _subtopic,
+              enabled: _theme != null,
+              onSelected: (v) => setState(() => _subtopic = v),
+              onCreate: (name) async {
+                final created = await appState.createSubtopic(
+                  theme: _theme!,
+                  name: name,
+                );
+                setState(() => _subtopic = created);
+                return created;
+              },
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<Difficulty>(
@@ -101,8 +106,7 @@ class _GenerateViewState extends State<_GenerateView> {
                 border: OutlineInputBorder(),
               ),
               items: Difficulty.values
-                  .map((d) =>
-                      DropdownMenuItem(value: d, child: Text(d.label)))
+                  .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
                   .toList(),
               onChanged: (v) =>
                   setState(() => _difficulty = v ?? Difficulty.basic),
@@ -131,23 +135,28 @@ class _GenerateViewState extends State<_GenerateView> {
                 alignLabelWithHint: true,
               ),
             ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              icon: controller.isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.auto_awesome),
-              label: Text(
-                controller.isLoading ? 'Gerando...' : 'Gerar questões',
-              ),
-              onPressed: canGenerate ? () => _onGenerate(context) : null,
-            ),
             const SizedBox(height: 16),
             _StatusBanner(controller: controller),
           ],
+        ),
+      ),
+      // Fixed action button at the bottom (does not scroll with content).
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton.icon(
+            icon: controller.isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+            label: Text(
+              controller.isLoading ? 'Gerando...' : 'Gerar questões',
+            ),
+            onPressed: canGenerate ? () => _onGenerate(context) : null,
+          ),
         ),
       ),
     );

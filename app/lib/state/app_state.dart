@@ -95,4 +95,55 @@ class AppState extends ChangeNotifier {
     if (t.isEmpty) return const [];
     return t.first.subtopics.map((s) => s.name).toList();
   }
+
+  /// Creates a theme (if a theme with the same name does not already exist)
+  /// and returns its name. Reloads the data.
+  Future<String> createTheme(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('O nome do tema não pode ser vazio.');
+    }
+    final existing = _themes.where(
+      (t) => t.name.toLowerCase() == trimmed.toLowerCase(),
+    );
+    if (existing.isNotEmpty) return existing.first.name;
+
+    await _repo.insertTheme(
+      id: _slug(trimmed),
+      name: trimmed,
+      createdAt: DateTime.now(),
+    );
+    await reload();
+    return trimmed;
+  }
+
+  /// Creates a subtopic under a theme (idempotent by name) and returns its
+  /// name. Reloads the data.
+  Future<String> createSubtopic({
+    required String theme,
+    required String name,
+  }) async {
+    final trimmedSub = name.trim();
+    if (trimmedSub.isEmpty) {
+      throw ArgumentError('O nome do subtópico não pode ser vazio.');
+    }
+    if (subtopicsOfTheme(theme)
+        .any((s) => s.toLowerCase() == trimmedSub.toLowerCase())) {
+      return trimmedSub;
+    }
+    await _repo.insertSubtopic(
+      id: '${_slug(theme)}__${_slug(trimmedSub)}',
+      themeId: _slug(theme),
+      name: trimmedSub,
+      createdAt: DateTime.now(),
+    );
+    await reload();
+    return trimmedSub;
+  }
+
+  static String _slug(String s) => s
+      .toLowerCase()
+      .trim()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'(^-|-$)'), '');
 }
