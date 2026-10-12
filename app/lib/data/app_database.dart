@@ -38,11 +38,24 @@ class AppDatabase extends _$AppDatabase {
             ));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          // v2: the answer_options primary key changed from {id} to
+          // {questionId, id}. In v1, option ids collided across questions and
+          // insertOrIgnore dropped options of all but the first question,
+          // leaving questions without answers. There is no user-authored data
+          // in this stage (only seeded example questions), so the safe,
+          // simplest fix is to drop and recreate all tables; the app re-seeds
+          // on next launch.
+          for (final table in allTables) {
+            await m.deleteTable(table.actualTableName);
+          }
           await m.createAll();
         },
         beforeOpen: (details) async {

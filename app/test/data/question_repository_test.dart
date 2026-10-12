@@ -104,5 +104,26 @@ void main() {
       final options = await db.select(db.answerOptions).get();
       expect(options, isEmpty);
     });
+
+    test(
+        'multiple questions reusing option ids a/b/c/d each keep their 4 options',
+        () async {
+      // Regression test: option ids are only unique within a question. With a
+      // single-column primary key on options, insertOrIgnore dropped the
+      // options of every question after the first (because ids collided),
+      // leaving those questions with no answers.
+      await repo.insertQuestion(exampleQuestion('q1'));
+      await repo.insertQuestion(exampleQuestion('q2'));
+      await repo.insertQuestion(exampleQuestion('q3'));
+
+      final questions = await repo.listQuestions();
+      expect(questions.length, 3);
+      for (final q in questions) {
+        expect(q.options.length, 4, reason: '${q.id} must keep all 4 options');
+        expect(q.options.where((o) => o.correct).length, 1);
+      }
+      final total = await db.select(db.answerOptions).get();
+      expect(total.length, 12); // 3 questions x 4 options
+    });
   });
 }

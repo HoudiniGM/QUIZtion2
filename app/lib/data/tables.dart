@@ -54,6 +54,8 @@ class Questions extends Table {
 /// individual explanation, correct flag and canonical order.
 @DataClassName('AnswerOptionRow')
 class AnswerOptions extends Table {
+  // Option id, stable only WITHIN a question (e.g. 'a'..'d'). It is not
+  // globally unique, so the primary key is the pair {questionId, id}.
   TextColumn get id => text()();
   TextColumn get questionId =>
       text().references(Questions, #id, onDelete: KeyAction.cascade)();
@@ -65,8 +67,11 @@ class AnswerOptions extends Table {
   TextColumn get contentType => text().withDefault(const Constant('text'))();
   IntColumn get position => integer()();
 
+  // Composite key: option ids repeat across questions ('a','b','c','d'), so
+  // uniqueness is per-question. Using only `id` as the key caused later
+  // questions' options to be dropped by insertOrIgnore due to id collisions.
   @override
-  Set<Column> get primaryKey => {id};
+  Set<Column> get primaryKey => {questionId, id};
 }
 
 /// Completed quiz attempts (history — populated from Stage 2 on).
