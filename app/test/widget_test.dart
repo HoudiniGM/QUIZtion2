@@ -24,14 +24,15 @@ void main() {
       QuiztionApp(repository: repository, settings: settings),
     );
 
-    // Initial frame: loading indicator while the seed/initialization runs.
     expect(find.byType(MaterialApp), findsOneWidget);
 
-    // Let the async initialization (seed + reload) complete and settle.
-    await tester.pumpAndSettle();
+    // Wait past the ~2s splash timer, then let navigation + seed settle.
+    // (pumpAndSettle is avoided here because the splash shows a continuous
+    // progress animation.)
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
 
-    // The home screen shows the app title and the summary section.
-    expect(find.text('QUIZtion'), findsOneWidget);
+    // The home screen shows the summary section after the splash.
     expect(find.text('Seu acervo'), findsOneWidget);
 
     await db.close();

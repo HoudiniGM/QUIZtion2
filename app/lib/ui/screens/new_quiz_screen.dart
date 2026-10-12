@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../domain/quiz_selection.dart';
 import '../../domain/shuffler.dart';
 import '../../state/app_state.dart';
+import '../widgets/brand_logo.dart';
 
 /// New quiz: choose a theme, one or more subtopics (or all) and the number of
 /// questions, with insufficient-quantity handling (requirements, 4.4 and 14).
@@ -28,7 +29,7 @@ class _NewQuizScreenState extends State<NewQuizScreen> {
         _theme == null ? <String>[] : state.subtopicsOfTheme(_theme!);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Novo quiz')),
+      appBar: AppBar(title: const BrandedAppBarTitle('Novo quiz')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

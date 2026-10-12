@@ -5,6 +5,7 @@ import '../../domain/content_type.dart';
 import '../../domain/question.dart';
 import '../../state/app_state.dart';
 import '../theme_icons.dart';
+import '../widgets/brand_logo.dart';
 import '../widgets/content_view.dart';
 import '../widgets/icon_picker.dart';
 
@@ -18,7 +19,7 @@ class QuestionBankScreen extends StatelessWidget {
     final state = context.watch<AppState>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Banco de questões')),
+      appBar: AppBar(title: const BrandedAppBarTitle('Banco de questões')),
       body: state.themes.isEmpty
           ? const _EmptyBank()
           : ListView(

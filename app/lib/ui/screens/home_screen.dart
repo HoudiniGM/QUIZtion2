@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../domain/difficulty.dart';
 import '../../state/app_state.dart';
+import '../widgets/brand_logo.dart';
 
 /// Home screen: branding header, a quick action and a simple progress summary
 /// (requirements, section 4.1). Primary navigation is the bottom navbar.
@@ -16,7 +17,9 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('QUIZtion')),
+      appBar: AppBar(
+        title: const BrandLogoHorizontal(height: 30),
+      ),
       body: state.loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

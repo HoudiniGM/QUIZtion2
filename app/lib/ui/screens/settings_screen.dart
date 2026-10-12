@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
+import '../widgets/brand_logo.dart';
 
 /// Settings screen (requirements, section 4.8).
 ///
@@ -36,7 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final appState = context.watch<AppState>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurações')),
+      appBar: AppBar(title: const BrandedAppBarTitle('Configurações')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

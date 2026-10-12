@@ -10,6 +10,7 @@ import 'screens/question_bank_screen.dart';
 import 'screens/quiz_screen.dart';
 import 'screens/results_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/splash_screen.dart';
 import 'widgets/app_shell.dart';
 
 /// Application route configuration.
@@ -19,9 +20,14 @@ import 'widgets/app_shell.dart';
 /// screens are pushed on top (full screen, without the navbar).
 GoRouter createRouter() {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     navigatorKey: rootNavigatorKey,
     routes: [
+      GoRoute(
+        path: '/splash',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (_, __) => const SplashScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),

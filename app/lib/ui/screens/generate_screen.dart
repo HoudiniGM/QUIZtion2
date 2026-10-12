@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../domain/difficulty.dart';
 import '../../state/app_state.dart';
 import '../../state/generation_controller.dart';
+import '../widgets/brand_logo.dart';
 import '../widgets/icon_picker.dart';
 import '../widgets/selector_with_create.dart';
 
@@ -57,7 +58,7 @@ class _GenerateViewState extends State<_GenerateView> {
         !controller.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gerar questões')),
+      appBar: AppBar(title: const BrandedAppBarTitle('Gerar questões')),
       body: AbsorbPointer(
         absorbing: controller.isLoading,
         child: ListView(
