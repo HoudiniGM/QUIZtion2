@@ -27,6 +27,12 @@ dependencies:
   # Suporte a web (drift)
   drift_flutter: ^0.1.0
 
+  # HTTP (consumo do backend de geração)
+  http: ^1.2.2
+
+  # Persistência de configurações simples (URL do backend)
+  shared_preferences: ^2.3.2
+
   # Formatação de datas
   intl: ^0.19.0
 

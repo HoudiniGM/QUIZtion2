@@ -2,11 +2,13 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/attempt.dart';
 import '../domain/question.dart';
+import 'screens/generate_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/new_quiz_screen.dart';
 import 'screens/question_bank_screen.dart';
 import 'screens/quiz_screen.dart';
 import 'screens/results_screen.dart';
+import 'screens/settings_screen.dart';
 
 /// Application route configuration.
 GoRouter createRouter() {
@@ -24,6 +26,14 @@ GoRouter createRouter() {
       GoRoute(
         path: '/new-quiz',
         builder: (_, __) => const NewQuizScreen(),
+      ),
+      GoRoute(
+        path: '/generate',
+        builder: (_, __) => const GenerateScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, __) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/quiz',

@@ -40,9 +40,14 @@ class HomeScreen extends StatelessWidget {
                 _FeatureButton(
                   icon: Icons.auto_awesome_outlined,
                   title: 'Gerar questões',
-                  description: 'Em breve (Etapa 3): geração por IA.',
-                  enabled: false,
-                  onTap: () {},
+                  description: 'Gerar novas questões por IA (requer internet).',
+                  onTap: () => context.push('/generate'),
+                ),
+                _FeatureButton(
+                  icon: Icons.settings_outlined,
+                  title: 'Configurações',
+                  description: 'Endereço do backend e informações.',
+                  onTap: () => context.push('/settings'),
                 ),
               ],
             ),

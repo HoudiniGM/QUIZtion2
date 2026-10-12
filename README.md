@@ -36,6 +36,25 @@ O projeto é construído de forma incremental (ver `docs/architecture.md`):
 > O histórico de tentativas foi **retirado do escopo** (ver `docs/architecture.md`,
 > seção 9): o resultado é mostrado ao final de cada quiz, mas não é salvo.
 
+## Gerar questões por IA (backend)
+
+A geração de novas questões usa o backend (`backend/`), que fala com a API
+Gemini. **Responder quizzes com questões já salvas funciona offline** — só a
+geração precisa de internet e do backend no ar.
+
+Configure o endereço do backend no app de uma destas formas:
+
+- Em tempo de execução, na tela **Configurações** do app (recomendado para
+  trocar sem recompilar).
+- Em tempo de compilação, via `--dart-define`:
+  ```bash
+  flutter run --dart-define=BACKEND_URL=http://SEU_IP:3000
+  ```
+
+Para rodar o backend localmente, veja `backend/README` (ou `backend/.env.example`
+para as variáveis, incluindo a chave Gemini). O deploy na Vercel é feito ao fim
+da Etapa 2.
+
 ## Como rodar o app (Flutter)
 
 **Pré-requisitos:** Flutter SDK **>= 3.27** (Dart >= 3.6) instalado e configurado no VS Code.
