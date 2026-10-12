@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 
 import { config } from '../config.js';
+import { logger } from '../logger.js';
 
 /**
  * JSON schema describing the structured output we want from the model:
@@ -52,25 +53,46 @@ const RESPONSE_SCHEMA = {
  * The API key is read from config (env) and never leaves the server.
  */
 export class GeminiClient {
-  constructor({ apiKey = config.geminiApiKey, model = config.geminiModel } = {}) {
+  constructor({
+    apiKey = config.geminiApiKey,
+    model = config.geminiModel,
+    timeoutMs = 45000,
+  } = {}) {
     this._model = model;
+    this._timeoutMs = timeoutMs;
     this._ai = new GoogleGenAI({ apiKey });
   }
 
   /**
    * Sends the prompt and returns parsed raw questions: Array<object>.
-   * Throws on network/API errors or if the response is not parseable.
+   * Throws on network/API errors, timeout, or if the response is not parseable.
    */
   async generateQuestions(prompt) {
-    const response = await this._ai.models.generateContent({
-      model: this._model,
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: RESPONSE_SCHEMA,
-        temperature: 0.7,
-      },
-    });
+    const started = Date.now();
+    logger.info(`gemini call started (model=${this._model})`);
+
+    let response;
+    try {
+      response = await withTimeout(
+        this._ai.models.generateContent({
+          model: this._model,
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: RESPONSE_SCHEMA,
+            temperature: 0.7,
+            // Gemini 3.x models reason internally by default, which can add
+            // very high latency. "low" keeps responses fast. (On Gemini 3,
+            // thinkingLevel is the supported control; thinkingBudget is
+            // ignored.)
+            thinkingConfig: { thinkingLevel: 'low' },
+          },
+        }),
+        this._timeoutMs,
+      );
+    } finally {
+      logger.info(`gemini call finished in ${Date.now() - started}ms`);
+    }
 
     const text = response?.text ?? '';
     let parsed;
@@ -86,4 +108,16 @@ export class GeminiClient {
     }
     return questions;
   }
+}
+
+/** Rejects if the promise does not settle within `ms` milliseconds. */
+function withTimeout(promise, ms) {
+  let timer;
+  const timeout = new Promise((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`Tempo limite de ${ms}ms excedido na IA.`)),
+      ms,
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
