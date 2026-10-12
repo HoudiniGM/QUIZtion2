@@ -18,7 +18,11 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const BrandLogoHorizontal(height: 30),
+        toolbarHeight: 64,
+        title: BrandLogoHorizontal(
+          height: 40,
+          fallbackColor: theme.colorScheme.onSurface,
+        ),
       ),
       body: state.loading
           ? const Center(child: CircularProgressIndicator())
@@ -66,7 +70,7 @@ class _Hero extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Organize por tema e subtópico, gere questões e teste seu '
+            'Organize por tema e tópico, gere questões e teste seu '
             'conhecimento.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
@@ -119,7 +123,7 @@ class _StatsCard extends StatelessWidget {
                 _Stat(
                   icon: Icons.account_tree_outlined,
                   value: '${state.totalSubtopics}',
-                  label: 'Subtópicos',
+                  label: 'Tópicos',
                 ),
               ],
             ),

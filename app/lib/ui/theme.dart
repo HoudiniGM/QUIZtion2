@@ -57,14 +57,26 @@ abstract class AppTheme {
   }
 
   static ThemeData _base(ColorScheme scheme) {
+    final isDark = scheme.brightness == Brightness.dark;
+    // Header combines with the logo: white in light mode, navy in dark mode.
+    final appBarBg = isDark ? BrandColors.dark : Colors.white;
+    final appBarFg = isDark ? Colors.white : BrandColors.dark;
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
+        backgroundColor: appBarBg,
+        foregroundColor: appBarFg,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: appBarFg,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,

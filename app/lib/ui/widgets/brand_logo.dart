@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Asset paths for the brand logos. Replace the files in assets/images/.
 abstract class LogoAssets {
-  static const horizontal = 'assets/images/nome-quiztion.png';
-  static const mark = 'assets/images/logo-quiztion.png';
+  static const horizontal = 'assets/nome-quiztion.png';
+  static const mark = 'assets/logo-quiztion.png';
 }
 
 /// Displays the horizontal logo (with text). Falls back to a styled "QUIZtion"
@@ -47,8 +47,8 @@ class BrandedAppBarTitle extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const BrandLogoMark(size: 24),
-        const SizedBox(width: 8),
+        const BrandLogoMark(size: 34),
+        const SizedBox(width: 10),
         Text(title),
       ],
     );
@@ -70,7 +70,7 @@ class BrandLogoMark extends StatelessWidget {
       errorBuilder: (context, _, __) => Icon(
         Icons.psychology,
         size: size,
-        color: Theme.of(context).colorScheme.onPrimary,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

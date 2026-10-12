@@ -25,6 +25,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get hasBackendUrl => _settings.hasBackendUrl;
+
+  Future<void> setBackendUrl(String url) async {
+    await _settings.setBackendUrl(url);
+    notifyListeners();
+  }
+
   bool _loading = true;
   bool get loading => _loading;
 

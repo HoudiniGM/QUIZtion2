@@ -24,91 +24,128 @@ class _NewQuizScreenState extends State<NewQuizScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final theme = Theme.of(context);
     final themes = state.themes.map((t) => t.name).toList();
+
+    // Guard against a theme deleted elsewhere.
+    if (_theme != null && !themes.contains(_theme)) {
+      _theme = null;
+      _selectedSubtopics.clear();
+    }
     final subtopics =
         _theme == null ? <String>[] : state.subtopicsOfTheme(_theme!);
+    // Drop any selected topics that no longer exist.
+    _selectedSubtopics.removeWhere((s) => !subtopics.contains(s));
 
     return Scaffold(
       appBar: AppBar(title: const BrandedAppBarTitle('Novo quiz')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          DropdownButtonFormField<String>(
-            initialValue: _theme,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Tema',
-              border: OutlineInputBorder(),
-            ),
-            items: themes
-                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                .toList(),
-            onChanged: (v) => setState(() {
-              _theme = v;
-              _selectedSubtopics.clear();
-            }),
-          ),
-          const SizedBox(height: 16),
-          if (_theme != null) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Fixed: theme selector + "Tópicos" header.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
               children: [
-                Text('Subtópicos',
-                    style: Theme.of(context).textTheme.titleMedium),
-                TextButton(
-                  onPressed: () => setState(() {
-                    if (_selectedSubtopics.length == subtopics.length) {
-                      _selectedSubtopics.clear();
-                    } else {
-                      _selectedSubtopics
-                        ..clear()
-                        ..addAll(subtopics);
-                    }
-                  }),
-                  child: Text(
-                    _selectedSubtopics.length == subtopics.length
-                        ? 'Limpar'
-                        : 'Selecionar todos',
+                DropdownButtonFormField<String>(
+                  initialValue: _theme,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Tema',
+                    border: OutlineInputBorder(),
                   ),
+                  items: themes
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
+                  onChanged: (v) => setState(() {
+                    _theme = v;
+                    _selectedSubtopics.clear();
+                  }),
                 ),
+                if (_theme != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Tópicos', style: theme.textTheme.titleMedium),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          if (_selectedSubtopics.length == subtopics.length) {
+                            _selectedSubtopics.clear();
+                          } else {
+                            _selectedSubtopics
+                              ..clear()
+                              ..addAll(subtopics);
+                          }
+                        }),
+                        child: Text(
+                          _selectedSubtopics.length == subtopics.length
+                              ? 'Limpar'
+                              : 'Selecionar todos',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
-            ...subtopics.map((s) => CheckboxListTile(
-                  value: _selectedSubtopics.contains(s),
-                  title: Text(s),
-                  controlAffinity: ListTileControlAffinity.leading,
-                  onChanged: (v) => setState(() {
-                    if (v == true) {
-                      _selectedSubtopics.add(s);
-                    } else {
-                      _selectedSubtopics.remove(s);
-                    }
-                  }),
-                )),
-            const SizedBox(height: 16),
-            Text('Quantidade de questões: $_quantity',
-                style: Theme.of(context).textTheme.titleMedium),
-            Slider(
-              value: _quantity.toDouble(),
-              min: 1,
-              max: 20,
-              divisions: 19,
-              label: '$_quantity',
-              onChanged: (v) => setState(() => _quantity = v.round()),
-            ),
-          ],
+          ),
+          // Scrollable: only the topics list.
+          Expanded(
+            child: _theme == null
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('Selecione um tema para ver os tópicos.'),
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    children: subtopics
+                        .map((s) => CheckboxListTile(
+                              value: _selectedSubtopics.contains(s),
+                              title: Text(s),
+                              controlAffinity:
+                                  ListTileControlAffinity.leading,
+                              onChanged: (v) => setState(() {
+                                if (v == true) {
+                                  _selectedSubtopics.add(s);
+                                } else {
+                                  _selectedSubtopics.remove(s);
+                                }
+                              }),
+                            ))
+                        .toList(),
+                  ),
+          ),
         ],
       ),
-      // Fixed action button at the bottom (does not scroll with content).
+      // Fixed footer: quantity (just above) + the start button.
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FilledButton.icon(
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Iniciar quiz'),
-            onPressed: (_theme == null || _selectedSubtopics.isEmpty)
-                ? null
-                : () => _start(context),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Quantidade de questões: $_quantity',
+                  style: theme.textTheme.titleMedium),
+              Slider(
+                value: _quantity.toDouble(),
+                min: 1,
+                max: 20,
+                divisions: 19,
+                label: '$_quantity',
+                onChanged: (v) => setState(() => _quantity = v.round()),
+              ),
+              const SizedBox(height: 4),
+              FilledButton.icon(
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Iniciar quiz'),
+                onPressed: (_theme == null || _selectedSubtopics.isEmpty)
+                    ? null
+                    : () => _start(context),
+              ),
+            ],
           ),
         ),
       ),

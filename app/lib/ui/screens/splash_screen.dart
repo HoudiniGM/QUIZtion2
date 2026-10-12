@@ -34,19 +34,19 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: BrandColors.dark,
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            BrandLogoHorizontal(height: 56, fallbackColor: Colors.white),
-            SizedBox(height: 24),
+            BrandLogoHorizontal(height: 72, fallbackColor: BrandColors.dark),
+            SizedBox(height: 28),
             SizedBox(
               width: 28,
               height: 28,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation(BrandColors.secondary),
+                valueColor: AlwaysStoppedAnimation(BrandColors.primary),
               ),
             ),
           ],

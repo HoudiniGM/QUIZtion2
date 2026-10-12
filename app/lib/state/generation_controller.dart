@@ -112,6 +112,8 @@ class GenerationController extends ChangeNotifier {
   }
 
   void reset() {
+    // No-op if already idle with no message (avoids needless rebuilds).
+    if (_status == GenerationStatus.idle && _message == null) return;
     _status = GenerationStatus.idle;
     _message = null;
     _savedCount = 0;

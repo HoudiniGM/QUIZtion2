@@ -89,7 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: const Icon(Icons.save),
             label: const Text('Salvar'),
             onPressed: () async {
-              await appState.settings.setBackendUrl(_urlController.text);
+              await appState.setBackendUrl(_urlController.text);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Endereço salvo.')),

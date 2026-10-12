@@ -10,9 +10,40 @@ import '../widgets/content_view.dart';
 import '../widgets/icon_picker.dart';
 
 /// Question bank as a collapsible tree (requirements, section 4.3):
-///   Theme → (expand) Subtopics → (expand) Questions (collapsed).
-class QuestionBankScreen extends StatelessWidget {
+///   Theme → (expand) Topics → (expand) Questions (collapsed).
+///
+/// Only one node can be open per level: expanding one collapses any other at
+/// the same level (and resets the deeper selections).
+class QuestionBankScreen extends StatefulWidget {
   const QuestionBankScreen({super.key});
+
+  @override
+  State<QuestionBankScreen> createState() => _QuestionBankScreenState();
+}
+
+class _QuestionBankScreenState extends State<QuestionBankScreen> {
+  String? _openTheme;
+  String? _openTopic;
+  String? _openQuestionId;
+
+  void _toggleTheme(String name) => setState(() {
+        if (_openTheme == name) {
+          _openTheme = null;
+        } else {
+          _openTheme = name;
+        }
+        _openTopic = null;
+        _openQuestionId = null;
+      });
+
+  void _toggleTopic(String name) => setState(() {
+        _openTopic = _openTopic == name ? null : name;
+        _openQuestionId = null;
+      });
+
+  void _toggleQuestion(String id) => setState(() {
+        _openQuestionId = _openQuestionId == id ? null : id;
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +57,16 @@ class QuestionBankScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               children: [
                 for (final theme in state.themes)
-                  _ThemeTile(themeName: theme.name, state: state),
+                  _ThemeTile(
+                    themeName: theme.name,
+                    state: state,
+                    expanded: _openTheme == theme.name,
+                    onToggle: () => _toggleTheme(theme.name),
+                    openTopic: _openTopic,
+                    onToggleTopic: _toggleTopic,
+                    openQuestionId: _openQuestionId,
+                    onToggleQuestion: _toggleQuestion,
+                  ),
               ],
             ),
     );
@@ -54,8 +94,23 @@ class _EmptyBank extends StatelessWidget {
 class _ThemeTile extends StatelessWidget {
   final String themeName;
   final AppState state;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final String? openTopic;
+  final ValueChanged<String> onToggleTopic;
+  final String? openQuestionId;
+  final ValueChanged<String> onToggleQuestion;
 
-  const _ThemeTile({required this.themeName, required this.state});
+  const _ThemeTile({
+    required this.themeName,
+    required this.state,
+    required this.expanded,
+    required this.onToggle,
+    required this.openTopic,
+    required this.onToggleTopic,
+    required this.openQuestionId,
+    required this.onToggleQuestion,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,37 +121,57 @@ class _ThemeTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: ExpansionTile(
-        leading: Icon(ThemeIcons.byId(iconId), color: theme.colorScheme.primary),
-        title: Text(
-          themeName,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text('$questionCount questão(ões)'),
-        trailing: PopupMenuButton<String>(
-          onSelected: (v) => _onThemeMenu(context, v),
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'icon', child: Text('Alterar ícone')),
-            PopupMenuItem(value: 'delete', child: Text('Excluir tema')),
-          ],
-        ),
-        childrenPadding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+      child: Column(
         children: [
-          if (subtopics.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Nenhum subtópico neste tema.'),
-              ),
-            )
-          else
-            for (final sub in subtopics)
-              _SubtopicTile(
-                themeName: themeName,
-                subtopicName: sub,
-                state: state,
-              ),
+          ListTile(
+            leading:
+                Icon(ThemeIcons.byId(iconId), color: theme.colorScheme.primary),
+            title: Text(
+              themeName,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text('$questionCount questão(ões)'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PopupMenuButton<String>(
+                  onSelected: (v) => _onThemeMenu(context, v),
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'icon', child: Text('Alterar ícone')),
+                    PopupMenuItem(value: 'delete', child: Text('Excluir tema')),
+                  ],
+                ),
+                Icon(expanded ? Icons.expand_less : Icons.expand_more),
+              ],
+            ),
+            onTap: onToggle,
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+              child: subtopics.isEmpty
+                  ? const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text('Nenhum tópico neste tema.'),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        for (final sub in subtopics)
+                          _SubtopicTile(
+                            themeName: themeName,
+                            subtopicName: sub,
+                            state: state,
+                            expanded: openTopic == sub,
+                            onToggle: () => onToggleTopic(sub),
+                            openQuestionId: openQuestionId,
+                            onToggleQuestion: onToggleQuestion,
+                          ),
+                      ],
+                    ),
+            ),
         ],
       ),
     );
@@ -117,8 +192,7 @@ class _ThemeTile extends StatelessWidget {
       final ok = await _confirm(
         context,
         title: 'Excluir tema',
-        message:
-            'Excluir o tema "$themeName" remove todos os seus subtópicos e '
+        message: 'Excluir o tema "$themeName" remove todos os seus tópicos e '
             'questões. Esta ação não pode ser desfeita.',
       );
       if (ok == true) {
@@ -157,16 +231,24 @@ Future<bool?> _confirm(
   );
 }
 
-/// Level 2: subtopic.
+/// Level 2: topic.
 class _SubtopicTile extends StatelessWidget {
   final String themeName;
   final String subtopicName;
   final AppState state;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final String? openQuestionId;
+  final ValueChanged<String> onToggleQuestion;
 
   const _SubtopicTile({
     required this.themeName,
     required this.subtopicName,
     required this.state,
+    required this.expanded,
+    required this.onToggle,
+    required this.openQuestionId,
+    required this.onToggleQuestion,
   });
 
   @override
@@ -175,159 +257,170 @@ class _SubtopicTile extends StatelessWidget {
     final questions =
         state.filter(theme: themeName, subtopics: [subtopicName]);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: ExpansionTile(
-        leading: Icon(
-          Icons.account_tree_outlined,
-          size: 20,
-          color: theme.colorScheme.secondary,
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(
+            Icons.account_tree_outlined,
+            size: 20,
+            color: theme.colorScheme.secondary,
+          ),
+          title: Text(subtopicName),
+          subtitle: Text('${questions.length} questão(ões)'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PopupMenuButton<String>(
+                onSelected: (v) => _onTopicMenu(context, v),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'delete', child: Text('Excluir tópico')),
+                ],
+              ),
+              Icon(expanded ? Icons.expand_less : Icons.expand_more),
+            ],
+          ),
+          onTap: onToggle,
         ),
-        title: Text(subtopicName),
-        subtitle: Text('${questions.length} questão(ões)'),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        trailing: PopupMenuButton<String>(
-          onSelected: (v) async {
-            if (v == 'delete') {
-              final ok = await _confirm(
-                context,
-                title: 'Excluir subtópico',
-                message:
-                    'Excluir o subtópico "$subtopicName" remove todas as suas '
-                    'questões. Esta ação não pode ser desfeita.',
-              );
-              if (ok == true) {
-                await state.deleteSubtopic(
-                  themeName: themeName,
-                  subtopicName: subtopicName,
-                );
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Subtópico "$subtopicName" excluído.'),
-                    ),
-                  );
-                }
-              }
-            }
-          },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'delete', child: Text('Excluir subtópico')),
-          ],
-        ),
-        childrenPadding: const EdgeInsets.only(left: 8, bottom: 8),
-        children: [
+        if (expanded)
           if (questions.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Nenhuma questão neste subtópico.'),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('Nenhuma questão neste tópico.'),
               ),
             )
           else
-            for (final q in questions) _QuestionTile(question: q),
-        ],
-      ),
+            Column(
+              children: [
+                for (final q in questions)
+                  _QuestionTile(
+                    question: q,
+                    expanded: openQuestionId == q.id,
+                    onToggle: () => onToggleQuestion(q.id),
+                  ),
+              ],
+            ),
+      ],
     );
+  }
+
+  Future<void> _onTopicMenu(BuildContext context, String action) async {
+    if (action == 'delete') {
+      final ok = await _confirm(
+        context,
+        title: 'Excluir tópico',
+        message: 'Excluir o tópico "$subtopicName" remove todas as suas '
+            'questões. Esta ação não pode ser desfeita.',
+      );
+      if (ok == true) {
+        await state.deleteSubtopic(
+          themeName: themeName,
+          subtopicName: subtopicName,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Tópico "$subtopicName" excluído.')),
+          );
+        }
+      }
+    }
   }
 }
 
-/// Level 3: a single question (collapsed by default).
+/// Level 3: a single question.
 class _QuestionTile extends StatelessWidget {
   final Question question;
+  final bool expanded;
+  final VoidCallback onToggle;
 
-  const _QuestionTile({required this.question});
+  const _QuestionTile({
+    required this.question,
+    required this.expanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      child: ExpansionTile(
-        leading: _DifficultyDot(question: question),
-        title: Text(
-          question.statement,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium,
-        ),
-        subtitle: Text(question.difficulty.label,
-            style: theme.textTheme.bodySmall),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(question.statement),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          leading: _DifficultyDot(question: question),
+          title: Text(
+            question.statement,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium,
           ),
-          if (question.hasCode) ...[
-            const SizedBox(height: 8),
-            ContentView(text: question.codeSnippet!, type: ContentType.code),
-          ],
-          const SizedBox(height: 12),
-          ...question.options.map((o) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      o.correct
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      color: o.correct ? Colors.green : null,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
+          subtitle:
+              Text(question.difficulty.label, style: theme.textTheme.bodySmall),
+          trailing: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+          onTap: onToggle,
+        ),
+        if (expanded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(question.statement),
+                if (question.hasCode) ...[
+                  const SizedBox(height: 8),
+                  ContentView(
+                      text: question.codeSnippet!, type: ContentType.code),
+                ],
+                const SizedBox(height: 12),
+                ...question.options.map((o) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ContentView(text: o.text, type: o.contentType),
-                          const SizedBox(height: 2),
-                          Text(
-                            o.explanation,
-                            style: theme.textTheme.bodySmall,
+                          Icon(
+                            o.correct
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: o.correct ? Colors.green : null,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ContentView(
+                                    text: o.text, type: o.contentType),
+                                const SizedBox(height: 2),
+                                Text(o.explanation,
+                                    style: theme.textTheme.bodySmall),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                    )),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Excluir'),
+                    onPressed: () => _confirmDelete(context),
+                  ),
                 ),
-              )),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Excluir'),
-              onPressed: () => _confirmDelete(context),
+              ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir questão'),
-        content: const Text(
-          'Tem certeza que deseja excluir esta questão? '
+    final confirmed = await _confirm(
+      context,
+      title: 'Excluir questão',
+      message: 'Tem certeza que deseja excluir esta questão? '
           'Esta ação não pode ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
     );
     if (confirmed == true && context.mounted) {
       await context.read<AppState>().deleteQuestion(question.id);

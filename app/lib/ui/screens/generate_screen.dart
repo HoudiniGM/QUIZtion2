@@ -50,8 +50,19 @@ class _GenerateViewState extends State<_GenerateView> {
     final appState = context.watch<AppState>();
     final controller = context.watch<GenerationController>();
     final themes = appState.themes.map((t) => t.name).toList();
+
+    // Guard against a selected theme/topic that was deleted elsewhere (e.g. in
+    // the question bank). Without this, the dropdown would hold a value absent
+    // from its items and throw (the "red screen" error).
+    if (_theme != null && !themes.contains(_theme)) {
+      _theme = null;
+      _subtopic = null;
+    }
     final subtopics =
         _theme == null ? <String>[] : appState.subtopicsOfTheme(_theme!);
+    if (_subtopic != null && !subtopics.contains(_subtopic)) {
+      _subtopic = null;
+    }
 
     final canGenerate = _theme != null &&
         _subtopic != null &&
@@ -70,10 +81,13 @@ class _GenerateViewState extends State<_GenerateView> {
               createLabel: 'Criar tema',
               options: themes,
               value: _theme,
-              onSelected: (v) => setState(() {
-                _theme = v;
-                _subtopic = null;
-              }),
+              onSelected: (v) {
+                controller.reset();
+                setState(() {
+                  _theme = v;
+                  _subtopic = null;
+                });
+              },
               onCreate: (name) async {
                 // Offer picking an icon for the new theme (floating dialog).
                 final iconId = await showThemeIconPicker(context);
@@ -88,12 +102,15 @@ class _GenerateViewState extends State<_GenerateView> {
             ),
             const SizedBox(height: 12),
             SelectorWithCreate(
-              label: 'Subtópico *',
-              createLabel: 'Criar subtópico',
+              label: 'Tópico *',
+              createLabel: 'Criar tópico',
               options: subtopics,
               value: _subtopic,
               enabled: _theme != null,
-              onSelected: (v) => setState(() => _subtopic = v),
+              onSelected: (v) {
+                controller.reset();
+                setState(() => _subtopic = v);
+              },
               onCreate: (name) async {
                 final created = await appState.createSubtopic(
                   theme: _theme!,
@@ -114,8 +131,10 @@ class _GenerateViewState extends State<_GenerateView> {
               items: Difficulty.values
                   .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
                   .toList(),
-              onChanged: (v) =>
-                  setState(() => _difficulty = v ?? Difficulty.basic),
+              onChanged: (v) {
+                controller.reset();
+                setState(() => _difficulty = v ?? Difficulty.basic);
+              },
             ),
             const SizedBox(height: 16),
             Text('Quantidade de questões: $_quantity',
@@ -126,7 +145,10 @@ class _GenerateViewState extends State<_GenerateView> {
               max: 10,
               divisions: 9,
               label: '$_quantity',
-              onChanged: (v) => setState(() => _quantity = v.round()),
+              onChanged: (v) {
+                controller.reset();
+                setState(() => _quantity = v.round());
+              },
             ),
             const SizedBox(height: 8),
             TextField(
