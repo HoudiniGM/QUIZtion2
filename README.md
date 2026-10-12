@@ -58,9 +58,9 @@ dart run build_runner build --delete-conflicting-outputs
 # 4. Roda os testes de lógica (embaralhamento, validação, pontuação, quiz) e o smoke test.
 flutter test
 
-# 5. (Somente para a web) gera os arquivos sqlite3.wasm e drift_worker.js em web/.
+# 5. (Somente para a web) coloque sqlite3.wasm e drift_worker.js em web/.
+#    Veja a seção "Observação para rodar no navegador (web)" abaixo.
 #    Pule esta etapa se for rodar apenas no Android.
-dart run drift_dev make-web-assets
 
 # 6. Executa o app.
 flutter run -d chrome                 # no navegador (visualização rápida), ou
@@ -80,19 +80,20 @@ flutter run -d <seu-dispositivo>      # em um dispositivo/emulador Android
 ### Observação para rodar no navegador (web)
 
 Para rodar na **web**, o drift precisa de dois arquivos auxiliares em
-`app/web/`: `sqlite3.wasm` e `drift_worker.js`. Em vez de baixá-los
-manualmente, gere-os com o próprio drift (garante que a versão bate com os
-pacotes resolvidos pelo `pub get`):
+`app/web/`: `sqlite3.wasm` e `drift_worker.js`. Eles precisam ter a **mesma
+versão** dos pacotes `drift` e `sqlite3` resolvidos no `pubspec.lock`, caso
+contrário o app falha ao abrir o banco (tela branca / erro de MIME).
 
-```bash
-cd app
-dart run drift_dev make-web-assets   # cria web/sqlite3.wasm e web/drift_worker.js
-flutter run -d chrome
-```
+Baixe os arquivos compatíveis para `app/web/`:
 
-> Rode esse comando **uma vez** (ou quando atualizar a versão do drift). Os
-> arquivos ficam em `app/web/` e não são versionados no repositório.
->
+- `drift_worker.js` — dos *releases* do drift:
+  https://github.com/simolus3/drift/releases (tag `drift-<versão>`)
+- `sqlite3.wasm` — dos *releases* do sqlite3.dart:
+  https://github.com/simolus3/sqlite3.dart/releases (tag `sqlite3-<versão>`)
+
+As versões a usar são as que aparecem no `app/pubspec.lock` (campos `version:`
+dos pacotes `drift` e `sqlite3`).
+
 > No **Android** nada disso é necessário — o SQLite nativo já é incluído via
 > `sqlite3_flutter_libs`. Os testes (`flutter test`) usam SQLite nativo e
 > também não dependem desses arquivos.
