@@ -116,14 +116,12 @@ class _FeatureButton extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onTap;
-  final bool enabled;
 
   const _FeatureButton({
     required this.icon,
     required this.title,
     required this.description,
     required this.onTap,
-    this.enabled = true,
   });
 
   @override
@@ -133,11 +131,8 @@ class _FeatureButton extends StatelessWidget {
         leading: Icon(icon),
         title: Text(title),
         subtitle: Text(description),
-        trailing: enabled
-            ? const Icon(Icons.chevron_right)
-            : const Icon(Icons.lock_clock, size: 18),
-        enabled: enabled,
-        onTap: enabled ? onTap : null,
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }
