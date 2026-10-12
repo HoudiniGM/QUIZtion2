@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/attempt.dart';
+import '../../domain/content_type.dart';
 import '../widgets/content_view.dart';
 
 /// Quiz results: totals, accuracy percentage and the detailed list of
@@ -121,7 +122,11 @@ class _AnswerCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            ContentView(text: q.statement, type: q.contentType),
+            Text(q.statement),
+            if (q.hasCode) ...[
+              const SizedBox(height: 8),
+              ContentView(text: q.codeSnippet!, type: ContentType.code),
+            ],
             const SizedBox(height: 12),
             ...q.options.map((o) {
               final isChosen = o.id == answer.chosenOptionId;

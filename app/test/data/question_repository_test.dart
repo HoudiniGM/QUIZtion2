@@ -71,6 +71,27 @@ void main() {
       expect(q.correctOption.explanation, 'eA');
     });
 
+    test('persists and reads back the optional code snippet', () async {
+      final withCode = exampleQuestion('q1').copyWith(
+        statement: 'Qual é a saída?',
+        codeSnippet: 'print("hi");',
+      );
+      final withoutCode = exampleQuestion('q2');
+
+      await repo.insertQuestion(withCode);
+      await repo.insertQuestion(withoutCode);
+
+      final all = await repo.listQuestions();
+      final q1 = all.firstWhere((q) => q.id == 'q1');
+      final q2 = all.firstWhere((q) => q.id == 'q2');
+
+      expect(q1.hasCode, isTrue);
+      expect(q1.codeSnippet, 'print("hi");');
+      expect(q1.statement, 'Qual é a saída?');
+      expect(q2.hasCode, isFalse);
+      expect(q2.codeSnippet, isNull);
+    });
+
     test('inserting the same question twice does not duplicate (idempotent)',
         () async {
       await repo.insertQuestion(exampleQuestion('q1'));

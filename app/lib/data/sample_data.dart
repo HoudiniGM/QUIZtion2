@@ -1,5 +1,4 @@
 import '../domain/answer_option.dart';
-import '../domain/content_type.dart';
 import '../domain/difficulty.dart';
 import '../domain/question.dart';
 import 'question_repository.dart';
@@ -158,15 +157,14 @@ class DataSeeder {
         id: 'seed-collections-intermediate-1',
         theme: 'Java Core',
         subtopic: 'Collections',
-        contentType: ContentType.code,
-        statement: 'Considere o código:\n\n'
-            'List<String> nomes = new ArrayList<>();\n'
+        statement:
+            'Considere o código abaixo. Qual é o resultado esperado?',
+        codeSnippet: 'List<String> nomes = new ArrayList<>();\n'
             'nomes.add("Ana");\n'
             'nomes.add("Bruno");\n'
             'nomes.add("Ana");\n\n'
             'Set<String> unicos = new HashSet<>(nomes);\n\n'
-            'System.out.println(unicos.size());\n\n'
-            'Qual é o resultado esperado?',
+            'System.out.println(unicos.size());',
         difficulty: Difficulty.intermediate,
         createdAt: now,
         options: const [

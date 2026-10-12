@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/content_type.dart';
 import '../../domain/difficulty.dart';
 import '../../domain/question.dart';
 import '../../state/app_state.dart';
@@ -199,11 +200,15 @@ class _QuestionTile extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: ContentView(
-              text: question.statement,
-              type: question.contentType,
-            ),
+            child: Text(question.statement),
           ),
+          if (question.hasCode) ...[
+            const SizedBox(height: 8),
+            ContentView(
+              text: question.codeSnippet!,
+              type: ContentType.code,
+            ),
+          ],
           const SizedBox(height: 12),
           ...question.options.map((o) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),

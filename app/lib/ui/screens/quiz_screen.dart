@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/answer_option.dart';
+import '../../domain/content_type.dart';
 import '../../domain/question.dart';
 import '../../state/quiz_controller.dart';
 import '../widgets/content_view.dart';
@@ -70,11 +71,17 @@ class _QuizView extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   const SizedBox(height: 12),
-                  ContentView(
-                    text: question.statement,
-                    type: question.contentType,
-                    textStyle: Theme.of(context).textTheme.titleMedium,
+                  Text(
+                    question.statement,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  if (question.hasCode) ...[
+                    const SizedBox(height: 12),
+                    ContentView(
+                      text: question.codeSnippet!,
+                      type: ContentType.code,
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   ...question.options.map(
                     (o) => _OptionCard(

@@ -16,8 +16,20 @@ class Question {
   final String id;
   final String theme;
   final String subtopic;
+
+  /// The question statement in natural language (always plain text).
   final String statement;
+
+  /// Optional code snippet shown as a monospaced code block below the
+  /// statement. When null, the question has no code. Keeping it separate from
+  /// [statement] prevents the natural-language text from being rendered as
+  /// code (see requirements, section 10).
+  final String? codeSnippet;
+
+  /// Content type of the statement. Kept for extensibility; the statement is
+  /// expected to be plain text — code goes in [codeSnippet].
   final ContentType contentType;
+
   final List<AnswerOption> options;
   final Difficulty difficulty;
   final List<String> tags;
@@ -34,10 +46,14 @@ class Question {
     required this.options,
     required this.difficulty,
     required this.createdAt,
+    this.codeSnippet,
     this.contentType = ContentType.text,
     this.tags = const [],
     this.promptVersion,
   });
+
+  /// Whether the question has a code snippet to display.
+  bool get hasCode => codeSnippet != null && codeSnippet!.trim().isNotEmpty;
 
   /// The correct option of the question.
   ///
@@ -50,6 +66,7 @@ class Question {
     String? theme,
     String? subtopic,
     String? statement,
+    String? codeSnippet,
     ContentType? contentType,
     List<AnswerOption>? options,
     Difficulty? difficulty,
@@ -62,6 +79,7 @@ class Question {
       theme: theme ?? this.theme,
       subtopic: subtopic ?? this.subtopic,
       statement: statement ?? this.statement,
+      codeSnippet: codeSnippet ?? this.codeSnippet,
       contentType: contentType ?? this.contentType,
       options: options ?? this.options,
       difficulty: difficulty ?? this.difficulty,

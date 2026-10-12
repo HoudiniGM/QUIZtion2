@@ -39,6 +39,8 @@ class Questions extends Table {
   TextColumn get theme => text()();
   TextColumn get subtopic => text()();
   TextColumn get statement => text()();
+  // Optional code snippet, rendered as a monospaced block below the statement.
+  TextColumn get codeSnippet => text().nullable()();
   TextColumn get contentType => text().withDefault(const Constant('text'))();
   TextColumn get difficulty => text()();
   TextColumn get tags => text().withDefault(const Constant(''))();
