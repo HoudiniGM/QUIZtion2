@@ -2,71 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/content_type.dart';
-import '../../domain/difficulty.dart';
 import '../../domain/question.dart';
 import '../../state/app_state.dart';
 import '../widgets/content_view.dart';
 
-/// Question bank: list, filter and view/delete saved questions
-/// (requirements, section 4.3).
-class QuestionBankScreen extends StatefulWidget {
+/// Question bank as a collapsible tree (requirements, section 4.3):
+///   Theme → (expand) Subtopics → (expand) Questions (collapsed).
+class QuestionBankScreen extends StatelessWidget {
   const QuestionBankScreen({super.key});
-
-  @override
-  State<QuestionBankScreen> createState() => _QuestionBankScreenState();
-}
-
-class _QuestionBankScreenState extends State<QuestionBankScreen> {
-  String? _theme;
-  String? _subtopic;
-  Difficulty? _difficulty;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final themes = state.themes.map((t) => t.name).toList();
-    final subtopics =
-        _theme == null ? <String>[] : state.subtopicsOfTheme(_theme!);
-
-    final questions = state.filter(
-      theme: _theme,
-      subtopics: _subtopic == null ? null : [_subtopic!],
-      difficulty: _difficulty,
-    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Banco de questões')),
-      body: Column(
-        children: [
-          _Filters(
-            themes: themes,
-            subtopics: subtopics,
-            theme: _theme,
-            subtopic: _subtopic,
-            difficulty: _difficulty,
-            onTheme: (v) => setState(() {
-              _theme = v;
-              _subtopic = null;
-            }),
-            onSubtopic: (v) => setState(() => _subtopic = v),
-            onDifficulty: (v) => setState(() => _difficulty = v),
-            onClear: () => setState(() {
-              _theme = null;
-              _subtopic = null;
-              _difficulty = null;
-            }),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: questions.isEmpty
-                ? const _EmptyBank()
-                : ListView.builder(
-                    itemCount: questions.length,
-                    itemBuilder: (_, i) => _QuestionTile(question: questions[i]),
-                  ),
-          ),
-        ],
-      ),
+      body: state.themes.isEmpty
+          ? const _EmptyBank()
+          : ListView(
+              padding: const EdgeInsets.all(12),
+              children: [
+                for (final theme in state.themes)
+                  _ThemeTile(themeName: theme.name, state: state),
+              ],
+            ),
     );
   }
 }
@@ -80,7 +39,7 @@ class _EmptyBank extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Nenhuma questão encontrada para os filtros selecionados.',
+          'Nenhum tema ainda. Crie um tema e gere questões para começar.',
           textAlign: TextAlign.center,
         ),
       ),
@@ -88,95 +47,100 @@ class _EmptyBank extends StatelessWidget {
   }
 }
 
-class _Filters extends StatelessWidget {
-  final List<String> themes;
-  final List<String> subtopics;
-  final String? theme;
-  final String? subtopic;
-  final Difficulty? difficulty;
-  final ValueChanged<String?> onTheme;
-  final ValueChanged<String?> onSubtopic;
-  final ValueChanged<Difficulty?> onDifficulty;
-  final VoidCallback onClear;
+/// Level 1: theme.
+class _ThemeTile extends StatelessWidget {
+  final String themeName;
+  final AppState state;
 
-  const _Filters({
-    required this.themes,
-    required this.subtopics,
-    required this.theme,
-    required this.subtopic,
-    required this.difficulty,
-    required this.onTheme,
-    required this.onSubtopic,
-    required this.onDifficulty,
-    required this.onClear,
-  });
+  const _ThemeTile({required this.themeName, required this.state});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
+    final theme = Theme.of(context);
+    final subtopics = state.subtopicsOfTheme(themeName);
+    final questionCount =
+        state.filter(theme: themeName).length;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ExpansionTile(
+        leading: Icon(Icons.category_outlined, color: theme.colorScheme.primary),
+        title: Text(
+          themeName,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text('$questionCount questão(ões)'),
+        childrenPadding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
         children: [
-          DropdownButtonFormField<String>(
-            initialValue: theme,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Tema',
-              border: OutlineInputBorder(),
-            ),
-            items: [
-              const DropdownMenuItem(value: null, child: Text('Todos')),
-              ...themes.map((t) => DropdownMenuItem(value: t, child: Text(t))),
-            ],
-            onChanged: onTheme,
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: subtopic,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Subtópico',
-              border: OutlineInputBorder(),
-            ),
-            items: [
-              const DropdownMenuItem(value: null, child: Text('Todos')),
-              ...subtopics
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s))),
-            ],
-            onChanged: theme == null ? null : onSubtopic,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<Difficulty>(
-                  initialValue: difficulty,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Dificuldade',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('Todas')),
-                    ...Difficulty.values.map((d) =>
-                        DropdownMenuItem(value: d, child: Text(d.label))),
-                  ],
-                  onChanged: onDifficulty,
-                ),
+          if (subtopics.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Nenhum subtópico neste tema.'),
               ),
-              IconButton(
-                tooltip: 'Limpar filtros',
-                onPressed: onClear,
-                icon: const Icon(Icons.filter_alt_off),
+            )
+          else
+            for (final sub in subtopics)
+              _SubtopicTile(
+                themeName: themeName,
+                subtopicName: sub,
+                state: state,
               ),
-            ],
-          ),
         ],
       ),
     );
   }
 }
 
+/// Level 2: subtopic.
+class _SubtopicTile extends StatelessWidget {
+  final String themeName;
+  final String subtopicName;
+  final AppState state;
+
+  const _SubtopicTile({
+    required this.themeName,
+    required this.subtopicName,
+    required this.state,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final questions =
+        state.filter(theme: themeName, subtopics: [subtopicName]);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ExpansionTile(
+        leading: Icon(
+          Icons.account_tree_outlined,
+          size: 20,
+          color: theme.colorScheme.secondary,
+        ),
+        title: Text(subtopicName),
+        subtitle: Text('${questions.length} questão(ões)'),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        childrenPadding: const EdgeInsets.only(left: 8, bottom: 8),
+        children: [
+          if (questions.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Nenhuma questão neste subtópico.'),
+              ),
+            )
+          else
+            for (final q in questions) _QuestionTile(question: q),
+        ],
+      ),
+    );
+  }
+}
+
+/// Level 3: a single question (collapsed by default).
 class _QuestionTile extends StatelessWidget {
   final Question question;
 
@@ -184,19 +148,21 @@ class _QuestionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: ExpansionTile(
+        leading: _DifficultyDot(question: question),
         title: Text(
           question.statement,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodyMedium,
         ),
-        subtitle: Text(
-          '${question.theme} • ${question.subtopic} • '
-          '${question.difficulty.label}',
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        subtitle: Text(question.difficulty.label,
+            style: theme.textTheme.bodySmall),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         children: [
           Align(
             alignment: Alignment.centerLeft,
@@ -204,10 +170,7 @@ class _QuestionTile extends StatelessWidget {
           ),
           if (question.hasCode) ...[
             const SizedBox(height: 8),
-            ContentView(
-              text: question.codeSnippet!,
-              type: ContentType.code,
-            ),
+            ContentView(text: question.codeSnippet!, type: ContentType.code),
           ],
           const SizedBox(height: 12),
           ...question.options.map((o) => Padding(
@@ -231,7 +194,7 @@ class _QuestionTile extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             o.explanation,
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: theme.textTheme.bodySmall,
                           ),
                         ],
                       ),
@@ -281,5 +244,26 @@ class _QuestionTile extends StatelessWidget {
         );
       }
     }
+  }
+}
+
+class _DifficultyDot extends StatelessWidget {
+  final Question question;
+  const _DifficultyDot({required this.question});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = switch (question.difficulty.id) {
+      'basic' => theme.colorScheme.secondary,
+      'intermediate' => theme.colorScheme.primary,
+      _ => Colors.deepOrange,
+    };
+    return Container(
+      width: 12,
+      height: 12,
+      margin: const EdgeInsets.only(top: 4),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
   }
 }
