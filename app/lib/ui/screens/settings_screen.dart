@@ -54,6 +54,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: const InputDecoration(
               labelText: 'URL do backend',
               hintText: 'http://192.168.0.10:3000',
+              helperText:
+                  'Para um backend local, use "http://" (não "https://").',
               border: OutlineInputBorder(),
             ),
           ),

@@ -83,6 +83,9 @@ No app, informe a URL do backend em **Configurações**, por exemplo:
   Linux/macOS)
 - App rodando no navegador (Flutter web) no mesmo PC: `http://localhost:3000`
 
+> **Atenção:** use `http://` (e NÃO `https://`) para o backend local — ele
+> serve HTTP puro, sem certificado TLS. Um `https://` não conecta.
+
 ## Segurança (versão pessoal)
 
 - A chave Gemini fica só no `.env` do servidor; nunca no app ou em logs.

@@ -95,7 +95,8 @@ class GenerationApi {
     } catch (_) {
       throw const GenerationException(
         'Não foi possível conectar ao servidor. Verifique sua conexão e o '
-        'endereço do backend nas Configurações.',
+        'endereço do backend nas Configurações. Dica: para um backend local, '
+        'use "http://" (e não "https://").',
       );
     }
 
