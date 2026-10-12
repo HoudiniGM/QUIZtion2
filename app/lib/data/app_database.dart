@@ -25,7 +25,17 @@ part 'app_database.g.dart';
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
-      : super(executor ?? driftDatabase(name: 'quiztion'));
+      : super(executor ??
+            driftDatabase(
+              name: 'quiztion',
+              // Required for the web build: these files must be present in
+              // app/web/ (sqlite3.wasm and drift_worker.js). They are ignored
+              // on native platforms, where sqlite3_flutter_libs is used.
+              web: DriftWebOptions(
+                sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+                driftWorker: Uri.parse('drift_worker.js'),
+              ),
+            ));
 
   @override
   int get schemaVersion => 1;
