@@ -80,20 +80,30 @@ flutter run -d <seu-dispositivo>      # em um dispositivo/emulador Android
 ### Observação para rodar no navegador (web)
 
 Para rodar na **web**, o drift precisa de dois arquivos auxiliares em
-`app/web/`: `sqlite3.wasm` e `drift_worker.js`. Eles precisam ter a **mesma
-versão** dos pacotes `drift` e `sqlite3` resolvidos no `pubspec.lock`, caso
-contrário o app falha ao abrir o banco (tela branca / erro de MIME).
+`app/web/`: `sqlite3.wasm` e `drift_worker.js`, nas versões compatíveis com os
+pacotes `drift` e `sqlite3` do `pubspec.lock`. Sem eles o app falha ao abrir o
+banco (tela branca / erro de MIME).
 
-Baixe os arquivos compatíveis para `app/web/`:
+**Forma mais fácil** — rode o script que já baixa as versões certas:
 
-- `drift_worker.js` — dos *releases* do drift:
-  https://github.com/simolus3/drift/releases (tag `drift-<versão>`)
-- `sqlite3.wasm` — dos *releases* do sqlite3.dart:
-  https://github.com/simolus3/sqlite3.dart/releases (tag `sqlite3-<versão>`)
+```powershell
+# Windows (PowerShell), a partir da pasta app:
+./tool/fetch_web_assets.ps1
+```
+```bash
+# Linux/macOS, a partir da pasta app:
+./tool/fetch_web_assets.sh
+```
 
-As versões a usar são as que aparecem no `app/pubspec.lock` (campos `version:`
-dos pacotes `drift` e `sqlite3`).
+**Manualmente** (se preferir), baixe para `app/web/`:
 
+- `drift_worker.js` → https://github.com/simolus3/drift/releases/download/drift-2.31.0/drift_worker.js
+- `sqlite3.wasm` → https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-2.9.4/sqlite3.wasm
+
+> Os links acima são as versões que casam com o `pubspec.lock` atual
+> (drift 2.31.0 / sqlite3 2.9.4). Se o `pubspec.lock` mudar, ajuste as versões
+> nos scripts em `app/tool/`.
+>
 > No **Android** nada disso é necessário — o SQLite nativo já é incluído via
 > `sqlite3_flutter_libs`. Os testes (`flutter test`) usam SQLite nativo e
 > também não dependem desses arquivos.
