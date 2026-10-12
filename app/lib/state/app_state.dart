@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../data/question_repository.dart';
 import '../data/sample_data.dart';
@@ -17,6 +17,13 @@ class AppState extends ChangeNotifier {
   AppState(this._repo, this._settings) : _seeder = DataSeeder(_repo);
 
   SettingsRepository get settings => _settings;
+
+  ThemeMode get themeMode => _settings.themeMode;
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    await _settings.setThemeMode(mode);
+    notifyListeners();
+  }
 
   bool _loading = true;
   bool get loading => _loading;

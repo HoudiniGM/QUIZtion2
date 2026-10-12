@@ -45,11 +45,13 @@ class _AppRootState extends State<_AppRoot> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = context.watch<AppState>().themeMode;
     return MaterialApp.router(
       title: 'QUIZtion',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: _router,
     );
   }

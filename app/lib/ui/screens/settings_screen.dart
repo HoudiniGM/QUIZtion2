@@ -33,13 +33,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.read<AppState>();
+    final appState = context.watch<AppState>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Configurações')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Text('Aparência', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          SegmentedButton<ThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: ThemeMode.light,
+                icon: Icon(Icons.light_mode),
+                label: Text('Claro'),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                icon: Icon(Icons.dark_mode),
+                label: Text('Escuro'),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                icon: Icon(Icons.brightness_auto),
+                label: Text('Sistema'),
+              ),
+            ],
+            selected: {appState.themeMode},
+            onSelectionChanged: (set) => appState.setThemeMode(set.first),
+          ),
+          const Divider(height: 32),
           Text('Backend', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           const Text(

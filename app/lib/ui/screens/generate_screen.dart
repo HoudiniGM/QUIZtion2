@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/difficulty.dart';
@@ -179,13 +180,29 @@ class _BackendWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer,
-      child: const Padding(
-        padding: EdgeInsets.all(12),
-        child: Text(
-          'O endereço do backend não está configurado. Abra as Configurações '
-          'para informá-lo antes de gerar questões.',
+      color: scheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'O endereço do backend não está configurado. Configure-o antes '
+              'de gerar questões.',
+              style: TextStyle(color: scheme.onErrorContainer),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                icon: const Icon(Icons.settings),
+                label: const Text('Abrir Configurações'),
+                onPressed: () => context.go('/settings'),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -8,14 +8,25 @@ import '../widgets/content_view.dart';
 /// Quiz results: totals, accuracy percentage and the detailed list of
 /// questions with the chosen option, the correct one and the explanations
 /// (requirements, sections 4.6 and 15).
-class ResultsScreen extends StatelessWidget {
+///
+/// Questions start collapsed and only one can be expanded at a time. The
+/// "Voltar" action is fixed at the bottom.
+class ResultsScreen extends StatefulWidget {
   final Attempt attempt;
 
   const ResultsScreen({super.key, required this.attempt});
 
   @override
+  State<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+  int? _expandedIndex;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final attempt = widget.attempt;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resultados'),
@@ -59,15 +70,27 @@ class ResultsScreen extends StatelessWidget {
           Text('Revisão das questões', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           ...attempt.answers.asMap().entries.map(
-                (e) => _AnswerCard(index: e.key + 1, answer: e.value),
+                (e) => _AnswerCard(
+                  index: e.key + 1,
+                  answer: e.value,
+                  expanded: _expandedIndex == e.key,
+                  onToggle: () => setState(() {
+                    _expandedIndex = _expandedIndex == e.key ? null : e.key;
+                  }),
+                ),
               ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
+        ],
+      ),
+      // Fixed "Voltar" button (no need to scroll to the end).
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton.icon(
             icon: const Icon(Icons.home),
             label: const Text('Voltar ao início'),
             onPressed: () => context.go('/'),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -96,8 +119,15 @@ class _Metric extends StatelessWidget {
 class _AnswerCard extends StatelessWidget {
   final int index;
   final QuizAnswer answer;
+  final bool expanded;
+  final VoidCallback onToggle;
 
-  const _AnswerCard({required this.index, required this.answer});
+  const _AnswerCard({
+    required this.index,
+    required this.answer,
+    required this.expanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -110,20 +140,43 @@ class _AnswerCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  answer.isCorrect ? Icons.check_circle : Icons.cancel,
-                  color: answer.isCorrect ? Colors.green : Colors.red,
-                  size: 20,
+            // Collapsed header: tap to expand/collapse.
+            InkWell(
+              onTap: onToggle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(
+                      answer.isCorrect ? Icons.check_circle : Icons.cancel,
+                      color: answer.isCorrect ? Colors.green : Colors.red,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Questão $index',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
+                    Icon(expanded ? Icons.expand_less : Icons.expand_more),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Text('Questão $index', style: theme.textTheme.titleSmall),
-              ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(q.statement),
-            if (q.hasCode) ...[
+            if (!expanded) ...[
+              const SizedBox(height: 4),
+              Text(
+                q.statement,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+            if (expanded) ...[
+              const SizedBox(height: 8),
+              Text(q.statement),
+              if (q.hasCode) ...[
               const SizedBox(height: 8),
               ContentView(text: q.codeSnippet!, type: ContentType.code),
             ],
@@ -175,6 +228,7 @@ class _AnswerCard extends StatelessWidget {
                 ),
               );
             }),
+            ],
           ],
         ),
       ),

@@ -23,7 +23,12 @@ abstract class AppTheme {
       primary: BrandColors.primary,
       secondary: BrandColors.secondary,
       brightness: Brightness.light,
-    ).copyWith(surface: Colors.white);
+    ).copyWith(
+      // High-contrast text on light surfaces.
+      surface: Colors.white,
+      onSurface: BrandColors.dark,
+      onSurfaceVariant: const Color(0xFF4A4E63),
+    );
 
     return _base(scheme).copyWith(
       scaffoldBackgroundColor: BrandColors.lightBackground,
@@ -36,7 +41,15 @@ abstract class AppTheme {
       primary: BrandColors.primary,
       secondary: BrandColors.secondary,
       brightness: Brightness.dark,
-    ).copyWith(surface: const Color(0xFF2A2F4A));
+    ).copyWith(
+      // Lighter violet primary reads better on dark surfaces.
+      primary: const Color(0xFF9D93F0),
+      onPrimary: BrandColors.dark,
+      // Elevated surface, clearly lighter than the navy background.
+      surface: const Color(0xFF2A2F4A),
+      onSurface: Colors.white,
+      onSurfaceVariant: const Color(0xFFC7CAD9),
+    );
 
     return _base(scheme).copyWith(
       scaffoldBackgroundColor: BrandColors.dark,

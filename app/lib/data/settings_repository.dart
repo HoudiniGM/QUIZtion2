@@ -1,6 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Stores simple app settings locally. For now, only the backend base URL.
+/// Stores simple app settings locally: backend base URL and theme mode.
 ///
 /// Resolution order for the backend URL:
 ///   1. a value saved by the user in Settings (if any);
@@ -8,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///   3. otherwise an empty string (generation disabled until configured).
 class SettingsRepository {
   static const _backendUrlKey = 'backend_url';
+  static const _themeModeKey = 'theme_mode';
 
   /// Compile-time default, e.g.:
   ///   flutter run --dart-define=BACKEND_URL=http://192.168.0.10:3000
@@ -38,5 +40,27 @@ class SettingsRepository {
 
   Future<void> clearBackendUrl() async {
     await _prefs.remove(_backendUrlKey);
+  }
+
+  /// Theme mode preference. Default is light.
+  ThemeMode get themeMode {
+    switch (_prefs.getString(_themeModeKey)) {
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+        return ThemeMode.system;
+      case 'light':
+      default:
+        return ThemeMode.light;
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final value = switch (mode) {
+      ThemeMode.dark => 'dark',
+      ThemeMode.system => 'system',
+      ThemeMode.light => 'light',
+    };
+    await _prefs.setString(_themeModeKey, value);
   }
 }
