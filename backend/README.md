@@ -86,11 +86,46 @@ No app, informe a URL do backend em **Configurações**, por exemplo:
 > **Atenção:** use `http://` (e NÃO `https://`) para o backend local — ele
 > serve HTTP puro, sem certificado TLS. Um `https://` não conecta.
 
+## Deploy na Vercel
+
+O backend já está preparado para a Vercel (arquivos `api/index.js` e
+`vercel.json`). O deploy roda o Express como função serverless; a URL pública
+usa **HTTPS** automaticamente.
+
+Passo a passo (painel da Vercel):
+
+1. Em https://vercel.com, clique em **Add New… → Project** e importe o
+   repositório `HoudiniGM/QUIZtion2`.
+2. Em **Root Directory**, selecione **`backend`** (o projeto é um monorepo; a
+   Vercel precisa apontar para a pasta do backend).
+3. **Framework Preset:** "Other" (não é Next.js). Não é preciso build command.
+4. Em **Environment Variables**, adicione:
+   - `GEMINI_API_KEY` = sua chave (obrigatório).
+   - `GEMINI_MODEL` = `gemini-3.5-flash-lite` (opcional; é o padrão).
+   > Nunca coloque a chave no código nem no repositório — apenas aqui.
+5. Clique em **Deploy**. Ao final, a Vercel dará uma URL como
+   `https://quiztion-backend.vercel.app`.
+
+Verifique:
+
+```bash
+curl https://SUA-URL.vercel.app/health
+# {"status":"ok","geminiConfigured":true}
+```
+
+No app, informe essa URL (com **https://**) em **Configurações**. A partir
+daí a geração funciona de qualquer rede, não só na sua Wi-Fi local.
+
+> Após alterar variáveis de ambiente na Vercel, faça um **redeploy** para que
+> passem a valer.
+
 ## Segurança (versão pessoal)
 
 - A chave Gemini fica só no `.env` do servidor; nunca no app ou em logs.
-- **Não há autenticação** no MVP: se você expuser este backend publicamente
-  (ex.: via túnel ou deploy), qualquer pessoa com a URL pode chamá-lo e
-  consumir sua cota do Gemini. Mantenha-o local ou protegido enquanto não houver
-  autenticação. Há limites de quantidade por requisição e de tentativas de
-  geração para reduzir abuso acidental.
+- **Não há autenticação** no MVP: ao fazer deploy (ex.: na Vercel) o backend
+  fica **público**, e qualquer pessoa com a URL pode chamá-lo e consumir sua
+  cota do Gemini. Há limites de quantidade por requisição e de tentativas de
+  geração para reduzir abuso acidental, mas eles não substituem autenticação.
+  Mitigações possíveis no futuro: uma chave de acesso simples entre app e
+  backend, ou restrição por origem. Enquanto isso, trate a URL como semi-
+  secreta e acompanhe o uso da sua cota.
