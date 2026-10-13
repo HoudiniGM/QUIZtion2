@@ -130,6 +130,50 @@ banco (tela branca / erro de MIME).
 > `sqlite3_flutter_libs`. Os testes (`flutter test`) usam SQLite nativo e
 > também não dependem desses arquivos.
 
+## Gerar o APK (Android)
+
+O build do APK é feito na sua máquina (precisa do Flutter + Android toolchain).
+
+```bash
+cd app
+flutter create . --platforms=android,web   # 1ª vez (gera a pasta android/)
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+
+# Build do APK já com a URL pública do backend (Vercel) embutida:
+flutter build apk --release --dart-define=BACKEND_URL=https://SUA-URL.vercel.app
+```
+
+APK gerado em `app/build/app/outputs/flutter-apk/app-release.apk` — copie para o
+celular e instale (permita "instalar de fontes desconhecidas").
+
+Observações:
+- No celular físico, o backend precisa ser a **URL pública (HTTPS) da Vercel**;
+  `localhost`/`10.0.2.2` não funcionam fora do PC/emulador. A URL também pode ser
+  definida em runtime na tela **Configurações** do app.
+- Garanta a permissão de internet em
+  `app/android/app/src/main/AndroidManifest.xml` (dentro de `<manifest>`):
+  `<uses-permission android:name="android.permission.INTERNET"/>`.
+
+### Ícone e nome do app
+
+**Ícone do launcher:** o projeto já está configurado para gerar os ícones a
+partir de `assets/logo-quiztion.png` (ver `flutter_launcher_icons` no
+`pubspec.yaml`). Para aplicar:
+
+```bash
+cd app
+flutter pub get
+dart run flutter_launcher_icons
+```
+
+Isso cria os ícones em `android/` (nos vários tamanhos e no formato adaptativo,
+com fundo navy da marca). Rode novamente sempre que trocar a imagem. Depois,
+rebuild o APK.
+
+**Nome do app** (abaixo do ícone): edite `android:label` em
+`app/android/app/src/main/AndroidManifest.xml` (ex.: `android:label="QUIZtion"`).
+
 ## Integração contínua (CI)
 
 A cada push ou pull request na `main`, o GitHub Actions executa, para o app

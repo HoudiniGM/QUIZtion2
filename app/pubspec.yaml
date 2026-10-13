@@ -45,7 +45,20 @@ dev_dependencies:
   drift_dev: ^2.19.0
   build_runner: ^2.4.11
 
+  # Gera os ícones do launcher (Android/iOS) a partir de uma imagem
+  flutter_launcher_icons: ^0.14.1
+
 flutter:
   uses-material-design: true
   assets:
     - assets/
+
+# Configuração do ícone do app (launcher). Gere com:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo-quiztion.png"
+  # Ícone adaptativo do Android (recomendado): fundo navy da marca + a logo.
+  adaptive_icon_background: "#20243A"
+  adaptive_icon_foreground: "assets/logo-quiztion.png"
