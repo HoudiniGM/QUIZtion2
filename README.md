@@ -1,6 +1,6 @@
 # QUIZtion
 
-Aplicativo móvel de estudos por meio de questionários de múltipla escolha gerados por IA, em qualquer área do conhecimento. Organização em **Tema → Subtópico → Questões**, com quizzes offline e histórico de desempenho.
+Aplicativo móvel de estudos por meio de questionários de múltipla escolha gerados por IA, em qualquer área do conhecimento. Organização em **Tema → Tópico → Questões**, com quizzes offline e histórico de desempenho.
 
 > MVP para uso pessoal, em um único dispositivo. Sem autenticação, contas ou sincronização entre dispositivos.
 
