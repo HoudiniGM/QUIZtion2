@@ -49,14 +49,20 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
 
+    // The bank only shows content that has questions: hide themes with no
+    // questions (and, inside a theme, hide topics with no questions).
+    final themesWithQuestions = state.themes
+        .where((t) => state.filter(theme: t.name).isNotEmpty)
+        .toList();
+
     return Scaffold(
       appBar: AppBar(title: const BrandedAppBarTitle('Banco de questões')),
-      body: state.themes.isEmpty
+      body: themesWithQuestions.isEmpty
           ? const _EmptyBank()
           : ListView(
               padding: const EdgeInsets.all(12),
               children: [
-                for (final theme in state.themes)
+                for (final theme in themesWithQuestions)
                   _ThemeTile(
                     themeName: theme.name,
                     state: state,
@@ -82,7 +88,8 @@ class _EmptyBank extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Nenhum tema ainda. Crie um tema e gere questões para começar.',
+          'Nenhuma questão ainda. Gere questões para vê-las organizadas aqui '
+          'por tema e tópico.',
           textAlign: TextAlign.center,
         ),
       ),
@@ -115,7 +122,12 @@ class _ThemeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final subtopics = state.subtopicsOfTheme(themeName);
+    // Only topics that have at least one question are shown in the bank.
+    final subtopics = state
+        .subtopicsOfTheme(themeName)
+        .where((s) =>
+            state.filter(theme: themeName, subtopics: [s]).isNotEmpty)
+        .toList();
     final questionCount = state.filter(theme: themeName).length;
     final iconId = state.iconOfTheme(themeName);
 
