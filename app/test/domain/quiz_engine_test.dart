@@ -139,14 +139,13 @@ void main() {
 
     test('finish produces an attempt with averaged scoring', () {
       final e = engine([
-        question('q1', correct: {'a'}), // will answer right -> 1.0
-        question('q2', correct: {'a', 'b'}), // answer a + c -> 0.5
+        question('q1', correct: {'a'}), // answer 'a' -> 1.0
+        question('q2', correct: {'a', 'b'}), // answer only 'a' -> 0.5
       ]);
       e.toggle('a');
       e.answer();
       e.next();
-      e.toggle('a');
-      e.toggle('c');
+      e.toggle('a'); // marks one of the two correct, nothing wrong -> 0.5
       e.answer();
 
       final att = e.finish(id: 't1', date: DateTime(2026, 5, 1));
