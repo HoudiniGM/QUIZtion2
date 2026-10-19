@@ -46,11 +46,11 @@ class QuestionValidation {
     }
 
     final correctCount = q.options.where((o) => o.correct).length;
-    if (correctCount != 1) {
-      errors.add(
-        'A questão deve ter exatamente 1 alternativa correta '
-        '(encontradas: $correctCount).',
-      );
+    if (correctCount < 1) {
+      errors.add('A questão deve ter pelo menos 1 alternativa correta.');
+    } else if (correctCount == q.options.length) {
+      // All options correct is not a meaningful question.
+      errors.add('A questão não pode ter todas as alternativas corretas.');
     }
 
     for (final o in q.options) {

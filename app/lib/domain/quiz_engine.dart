@@ -2,34 +2,45 @@ import 'attempt.dart';
 import 'question.dart';
 
 /// State of a single question within a quiz session.
+///
+/// Supports one or more selected options (multiple-answer questions): the user
+/// toggles options on/off before confirming.
 class QuestionState {
   final Question question;
 
-  /// Id of the selected option (not yet confirmed), or null.
-  final String? selectedId;
+  /// Ids of the selected options (not yet confirmed).
+  final Set<String> selectedIds;
 
-  /// Id of the confirmed (final) option, or null if not answered yet.
-  final String? confirmedId;
+  /// Ids of the confirmed (final) options, or null if not answered yet.
+  final Set<String>? confirmedIds;
 
-  const QuestionState({
+  QuestionState({
     required this.question,
-    this.selectedId,
-    this.confirmedId,
-  });
+    Set<String>? selectedIds,
+    this.confirmedIds,
+  }) : selectedIds = selectedIds ?? <String>{};
 
-  bool get answered => confirmedId != null;
+  bool get answered => confirmedIds != null;
 
-  bool get isCorrect => answered && confirmedId == question.correctOption.id;
+  bool get hasSelection => selectedIds.isNotEmpty;
+
+  /// Score (0.0–1.0) for this question once answered; 0 before answering.
+  double get score {
+    if (!answered) return 0;
+    return QuizAnswer(question: question, chosenOptionIds: confirmedIds!).score;
+  }
+
+  /// Whether answered perfectly.
+  bool get isFullyCorrect => answered && score >= 1.0;
 
   QuestionState copyWith({
-    String? selectedId,
-    String? confirmedId,
-    bool clearSelection = false,
+    Set<String>? selectedIds,
+    Set<String>? confirmedIds,
   }) {
     return QuestionState(
       question: question,
-      selectedId: clearSelection ? null : (selectedId ?? this.selectedId),
-      confirmedId: confirmedId ?? this.confirmedId,
+      selectedIds: selectedIds ?? this.selectedIds,
+      confirmedIds: confirmedIds ?? this.confirmedIds,
     );
   }
 }
@@ -38,7 +49,7 @@ class QuestionState {
 ///
 /// Rules (see requirements, section 14):
 /// - one question at a time;
-/// - select an option before "Responder";
+/// - select one OR MORE options before "Responder";
 /// - confirmation ("Responder") is final and cannot be changed;
 /// - advance to the next question; "Finalizar" on the last one.
 ///
@@ -63,22 +74,28 @@ class QuizEngine {
   bool get isLast => _currentIndex == total - 1;
   bool get isFirst => _currentIndex == 0;
 
-  /// Selects (without confirming) an option on the current question.
-  /// Ignored if the question is already answered (confirmation is final).
-  void select(String optionId) {
+  /// Toggles an option on the current question (adds if absent, removes if
+  /// present). Ignored if the question is already answered.
+  void toggle(String optionId) {
     if (current.answered) return;
-    _states[_currentIndex] = current.copyWith(selectedId: optionId);
+    final next = Set<String>.of(current.selectedIds);
+    if (next.contains(optionId)) {
+      next.remove(optionId);
+    } else {
+      next.add(optionId);
+    }
+    _states[_currentIndex] = current.copyWith(selectedIds: next);
   }
 
-  /// Confirms ("Responder") the selected option on the current question.
+  /// Confirms ("Responder") the selected options on the current question.
   ///
-  /// Returns `true` if confirmation happened. Returns `false` if there was no
-  /// selection or if the question was already answered. Confirmation is final.
+  /// Returns `true` if confirmation happened. Returns `false` if nothing was
+  /// selected or if the question was already answered. Confirmation is final.
   bool answer() {
     if (current.answered) return false;
-    final sel = current.selectedId;
-    if (sel == null) return false;
-    _states[_currentIndex] = current.copyWith(confirmedId: sel);
+    if (current.selectedIds.isEmpty) return false;
+    _states[_currentIndex] =
+        current.copyWith(confirmedIds: Set<String>.of(current.selectedIds));
     return true;
   }
 
@@ -107,7 +124,7 @@ class QuizEngine {
     final answers = _states
         .map((s) => QuizAnswer(
               question: s.question,
-              chosenOptionId: s.confirmedId!,
+              chosenOptionIds: s.confirmedIds!,
             ))
         .toList();
     return Attempt(

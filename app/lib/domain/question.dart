@@ -6,7 +6,7 @@ import 'difficulty.dart';
 ///
 /// MVP invariants (see requirements, sections 9, 11 and 12):
 /// - exactly 4 options;
-/// - exactly 1 correct option;
+/// - at least 1 correct option (one or more — multiple-answer questions);
 /// - each option has an individual explanation.
 ///
 /// Strong enforcement of these rules is done by the validator; the constructor
@@ -55,11 +55,16 @@ class Question {
   /// Whether the question has a code snippet to display.
   bool get hasCode => codeSnippet != null && codeSnippet!.trim().isNotEmpty;
 
-  /// The correct option of the question.
-  ///
-  /// Assumes a valid question (exactly one correct). Throws [StateError] if
-  /// there is not exactly one correct option.
-  AnswerOption get correctOption => options.singleWhere((o) => o.correct);
+  /// All correct options of the question (one or more).
+  List<AnswerOption> get correctOptions =>
+      options.where((o) => o.correct).toList();
+
+  /// Ids of all correct options.
+  Set<String> get correctOptionIds =>
+      options.where((o) => o.correct).map((o) => o.id).toSet();
+
+  /// Whether the question has more than one correct option.
+  bool get isMultipleAnswer => correctOptions.length > 1;
 
   Question copyWith({
     String? id,

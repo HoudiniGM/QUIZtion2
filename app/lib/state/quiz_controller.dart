@@ -25,11 +25,12 @@ class QuizController extends ChangeNotifier {
   bool get isLast => _engine.isLast;
   bool get canFinish => _engine.canFinish;
 
-  bool get hasSelection => current.selectedId != null;
+  bool get hasSelection => current.hasSelection;
   bool get answered => current.answered;
 
-  void select(String optionId) {
-    _engine.select(optionId);
+  /// Toggles an option (multiple-answer aware).
+  void toggle(String optionId) {
+    _engine.toggle(optionId);
     notifyListeners();
   }
 

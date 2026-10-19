@@ -69,7 +69,7 @@ void main() {
       for (final q in prepared) {
         expect(q.options.length, 4);
         expect(q.options.where((o) => o.correct).length, 1);
-        expect(q.correctOption.correct, isTrue);
+        expect(q.correctOptions.single.correct, isTrue);
       }
     });
 

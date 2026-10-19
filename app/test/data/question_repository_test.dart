@@ -66,9 +66,9 @@ void main() {
       expect(q.id, 'q1');
       expect(q.options.length, 4);
       expect(q.options.where((o) => o.correct).length, 1);
-      expect(q.correctOption.id, 'a');
+      expect(q.correctOptions.single.id, 'a');
       // Option<->explanation association preserved.
-      expect(q.correctOption.explanation, 'eA');
+      expect(q.correctOptions.single.explanation, 'eA');
     });
 
     test('persists and reads back the optional code snippet', () async {

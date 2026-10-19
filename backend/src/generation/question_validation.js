@@ -66,10 +66,12 @@ export function validateQuestion(raw, context = {}) {
     });
   }
 
-  if (options.length === 4 && correctCount !== 1) {
-    errors.push(
-      `Deve haver exatamente 1 alternativa correta (há ${correctCount}).`,
-    );
+  if (options.length === 4) {
+    if (correctCount < 1) {
+      errors.push('Deve haver pelo menos 1 alternativa correta.');
+    } else if (correctCount === options.length) {
+      errors.push('A questão não pode ter todas as alternativas corretas.');
+    }
   }
 
   // Duplicate / nearly identical option texts.

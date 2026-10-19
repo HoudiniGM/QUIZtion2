@@ -9,7 +9,7 @@
  * The version string is recorded in each generated question's metadata, so we
  * can investigate issues and compare future prompt versions.
  */
-export const PROMPT_VERSION = 'v1';
+export const PROMPT_VERSION = 'v2';
 
 /**
  * The permanent, generic instructions given to the model. Written in pt-BR
@@ -24,7 +24,9 @@ matemática, física, idiomas, etc.). Não assuma que o assunto é programação
 Regras obrigatórias de cada questão:
 - Respeite estritamente o tema e o subtópico informados.
 - Produza exatamente 4 alternativas.
-- Exatamente 1 alternativa correta.
+- A questão pode ter UMA OU MAIS alternativas corretas (questões de múltipla
+  resposta). Use pelo menos 1 e no máximo 3 corretas — nunca todas as 4.
+  Varie: a maioria das questões deve ter 1 correta, e algumas podem ter 2 ou 3.
 - Uma explicação individual para CADA alternativa (por que está correta ou
   incorreta; quando útil, esclareça a confusão conceitual envolvida).
 - Adeque o raciocínio exigido ao nível de dificuldade informado.

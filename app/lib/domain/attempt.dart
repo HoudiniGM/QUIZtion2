@@ -3,25 +3,43 @@ import 'question.dart';
 /// Record of a single answer given during a quiz.
 ///
 /// Stores the answered question (with its options in the order they were
-/// shown), the id of the option chosen by the user and the id of the correct
-/// one. Preserves the information needed to rebuild the result later,
-/// regardless of any shuffling (see requirements, section 15).
+/// shown) and the ids of the options the user marked. A question may have one
+/// or more correct options (multiple-answer), so the chosen set may contain
+/// more than one id. Preserves the information needed to rebuild the result
+/// later, regardless of any shuffling (see requirements, section 15).
 class QuizAnswer {
   final Question question;
 
-  /// Id of the option chosen by the user.
-  final String chosenOptionId;
+  /// Ids of the options marked by the user (one or more).
+  final Set<String> chosenOptionIds;
 
   const QuizAnswer({
     required this.question,
-    required this.chosenOptionId,
+    required this.chosenOptionIds,
   });
 
-  /// Id of the correct option of the question.
-  String get correctOptionId => question.correctOption.id;
+  /// Ids of the correct options of the question (one or more).
+  Set<String> get correctOptionIds => question.correctOptionIds;
 
-  /// Whether the user's answer is correct.
-  bool get isCorrect => chosenOptionId == correctOptionId;
+  /// Score for this question, from 0.0 to 1.0, using the agreed formula:
+  ///
+  ///   score = max(0, correctMarked - wrongMarked) / totalCorrect
+  ///
+  /// - Marking a wrong option subtracts (one cancels one correct).
+  /// - Failing to mark a correct option simply does not add (no extra penalty).
+  double get score {
+    final correct = correctOptionIds;
+    if (correct.isEmpty) return 0;
+    final correctMarked =
+        chosenOptionIds.where((id) => correct.contains(id)).length;
+    final wrongMarked =
+        chosenOptionIds.where((id) => !correct.contains(id)).length;
+    final raw = (correctMarked - wrongMarked) / correct.length;
+    return raw < 0 ? 0 : raw;
+  }
+
+  /// Convenience: whether the question was answered perfectly (score == 1.0).
+  bool get isFullyCorrect => score >= 1.0;
 }
 
 /// The result of a completed quiz: the set of answers plus quiz metadata.
@@ -46,13 +64,20 @@ class Attempt {
 
   int get total => answers.length;
 
-  int get correctCount => answers.where((a) => a.isCorrect).length;
+  /// Number of questions answered perfectly (score == 1.0).
+  int get fullyCorrectCount => answers.where((a) => a.isFullyCorrect).length;
 
-  int get wrongCount => total - correctCount;
+  /// Questions not answered perfectly.
+  int get notFullyCorrectCount => total - fullyCorrectCount;
 
-  /// Accuracy percentage (0–100). Returns 0 when there are no answers.
+  /// Sum of per-question scores (each 0.0–1.0).
+  double get totalScore =>
+      answers.fold(0.0, (sum, a) => sum + a.score);
+
+  /// Overall accuracy percentage (0–100): the mean of per-question scores.
+  /// With single-correct questions this reduces to the usual correct ratio.
   double get accuracyPercent {
     if (total == 0) return 0;
-    return (correctCount / total) * 100;
+    return (totalScore / total) * 100;
   }
 }

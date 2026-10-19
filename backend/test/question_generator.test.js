@@ -37,7 +37,7 @@ describe('QuestionGenerator', () => {
 
     expect(out.saved).toHaveLength(2);
     expect(out.failed).toBe(0);
-    expect(out.promptVersion).toBe('v1');
+    expect(out.promptVersion).toBe('v2');
     expect(client.generateQuestions).toHaveBeenCalledTimes(1);
 
     // Shape expected by the app.
@@ -46,7 +46,7 @@ describe('QuestionGenerator', () => {
       theme: 'Biologia',
       subtopic: 'Genética',
       difficulty: 'basic',
-      promptVersion: 'v1',
+      promptVersion: 'v2',
     });
     expect(typeof q.id).toBe('string');
     expect(q.options).toHaveLength(4);

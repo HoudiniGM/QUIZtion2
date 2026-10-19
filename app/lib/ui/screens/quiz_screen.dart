@@ -82,19 +82,29 @@ class _QuizView extends StatelessWidget {
                       type: ContentType.code,
                     ),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+                  if (question.isMultipleAnswer)
+                    Text(
+                      'Marque todas as alternativas corretas.',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontStyle: FontStyle.italic),
+                    ),
+                  const SizedBox(height: 8),
                   ...question.options.map(
                     (o) => _OptionCard(
                       option: o,
-                      selected: state.selectedId == o.id,
+                      selected: state.selectedIds.contains(o.id),
                       answered: ctrl.answered,
-                      correctId: question.correctOption.id,
-                      onTap: ctrl.answered ? null : () => ctrl.select(o.id),
+                      isCorrect: question.correctOptionIds.contains(o.id),
+                      multiple: question.isMultipleAnswer,
+                      onTap: ctrl.answered ? null : () => ctrl.toggle(o.id),
                     ),
                   ),
                   if (ctrl.answered) ...[
                     const SizedBox(height: 16),
-                    _AnswerFeedback(correct: state.isCorrect),
+                    _AnswerFeedback(score: state.score),
                   ],
                 ],
               ),
@@ -133,21 +143,22 @@ class _OptionCard extends StatelessWidget {
   final AnswerOption option;
   final bool selected;
   final bool answered;
-  final String correctId;
+  final bool isCorrect;
+  final bool multiple;
   final VoidCallback? onTap;
 
   const _OptionCard({
     required this.option,
     required this.selected,
     required this.answered,
-    required this.correctId,
+    required this.isCorrect,
+    required this.multiple,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isCorrect = option.id == correctId;
 
     Color? color;
     if (answered) {
@@ -172,22 +183,7 @@ class _OptionCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    answered
-                        ? (isCorrect
-                            ? Icons.check_circle
-                            : (selected
-                                ? Icons.cancel
-                                : Icons.radio_button_unchecked))
-                        : (selected
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_unchecked),
-                    color: answered
-                        ? (isCorrect
-                            ? Colors.green
-                            : (selected ? Colors.red : null))
-                        : null,
-                  ),
+                  Icon(_iconFor(), color: _iconColor()),
                   const SizedBox(width: 8),
                   Expanded(
                     child: ContentView(
@@ -199,10 +195,7 @@ class _OptionCard extends StatelessWidget {
               ),
               if (answered) ...[
                 const SizedBox(height: 8),
-                Text(
-                  option.explanation,
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text(option.explanation, style: theme.textTheme.bodySmall),
               ],
             ],
           ),
@@ -210,30 +203,56 @@ class _OptionCard extends StatelessWidget {
       ),
     );
   }
+
+  IconData _iconFor() {
+    if (answered) {
+      if (isCorrect) return Icons.check_circle;
+      if (selected) return Icons.cancel;
+      return multiple
+          ? Icons.check_box_outline_blank
+          : Icons.radio_button_unchecked;
+    }
+    // Not answered yet: checkbox for multiple-answer, radio otherwise.
+    if (multiple) {
+      return selected ? Icons.check_box : Icons.check_box_outline_blank;
+    }
+    return selected ? Icons.radio_button_checked : Icons.radio_button_unchecked;
+  }
+
+  Color? _iconColor() {
+    if (!answered) return null;
+    if (isCorrect) return Colors.green;
+    if (selected) return Colors.red;
+    return null;
+  }
 }
 
 class _AnswerFeedback extends StatelessWidget {
-  final bool correct;
+  /// Per-question score, 0.0–1.0.
+  final double score;
 
-  const _AnswerFeedback({required this.correct});
+  const _AnswerFeedback({required this.score});
 
   @override
   Widget build(BuildContext context) {
+    final percent = (score * 100).round();
+    final (color, icon, label) = score >= 1.0
+        ? (Colors.green, Icons.check_circle, 'Resposta correta!')
+        : score <= 0
+            ? (Colors.red, Icons.cancel, 'Resposta incorreta.')
+            : (Colors.orange, Icons.info, 'Parcialmente correta — $percent%.');
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: (correct ? Colors.green : Colors.red).withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(correct ? Icons.check_circle : Icons.cancel,
-              color: correct ? Colors.green : Colors.red),
+          Icon(icon, color: color),
           const SizedBox(width: 8),
-          Text(
-            correct ? 'Resposta correta!' : 'Resposta incorreta.',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );

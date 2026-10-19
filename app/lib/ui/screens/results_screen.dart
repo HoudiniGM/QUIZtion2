@@ -51,13 +51,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     children: [
                       _Metric(value: '${attempt.total}', label: 'Respondidas'),
                       _Metric(
-                        value: '${attempt.correctCount}',
-                        label: 'Corretas',
+                        value: '${attempt.fullyCorrectCount}',
+                        label: 'Totalmente certas',
                         color: Colors.green,
                       ),
                       _Metric(
-                        value: '${attempt.wrongCount}',
-                        label: 'Incorretas',
+                        value: '${attempt.notFullyCorrectCount}',
+                        label: 'Demais',
                         color: Colors.red,
                       ),
                     ],
@@ -129,6 +129,18 @@ class _AnswerCard extends StatelessWidget {
     required this.onToggle,
   });
 
+  IconData _headerIcon() {
+    if (answer.isFullyCorrect) return Icons.check_circle;
+    if (answer.score <= 0) return Icons.cancel;
+    return Icons.info; // partial
+  }
+
+  Color _headerColor() {
+    if (answer.isFullyCorrect) return Colors.green;
+    if (answer.score <= 0) return Colors.red;
+    return Colors.orange; // partial
+  }
+
   @override
   Widget build(BuildContext context) {
     final q = answer.question;
@@ -147,11 +159,7 @@ class _AnswerCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    Icon(
-                      answer.isCorrect ? Icons.check_circle : Icons.cancel,
-                      color: answer.isCorrect ? Colors.green : Colors.red,
-                      size: 20,
-                    ),
+                    Icon(_headerIcon(), color: _headerColor(), size: 20),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -159,6 +167,14 @@ class _AnswerCard extends StatelessWidget {
                         style: theme.textTheme.titleSmall,
                       ),
                     ),
+                    if (answer.question.isMultipleAnswer && !answer.isFullyCorrect)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          '${(answer.score * 100).round()}%',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                      ),
                     Icon(expanded ? Icons.expand_less : Icons.expand_more),
                   ],
                 ),
@@ -182,8 +198,8 @@ class _AnswerCard extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             ...q.options.map((o) {
-              final isChosen = o.id == answer.chosenOptionId;
-              final isCorrect = o.id == answer.correctOptionId;
+              final isChosen = answer.chosenOptionIds.contains(o.id);
+              final isCorrect = answer.correctOptionIds.contains(o.id);
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(8),

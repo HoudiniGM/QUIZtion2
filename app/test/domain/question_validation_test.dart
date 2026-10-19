@@ -43,24 +43,36 @@ void main() {
       expect(r.errors.any((e) => e.contains('4 alternativas')), isTrue);
     });
 
-    test('rejects a question without exactly one correct option (zero)', () {
+    test('rejects a question with no correct option', () {
       final q = validQuestion()
           .copyWith(options: [opt('a'), opt('b'), opt('c'), opt('d')]);
       final r = QuestionValidation.validate(q);
       expect(r.valid, isFalse);
-      expect(r.errors.any((e) => e.contains('1 alternativa correta')), isTrue);
+      expect(
+          r.errors.any((e) => e.contains('pelo menos 1 alternativa correta')),
+          isTrue);
     });
 
-    test('rejects a question with more than one correct option', () {
+    test('accepts a question with more than one correct option', () {
       final q = validQuestion().copyWith(options: [
         opt('a', correct: true),
         opt('b', correct: true),
         opt('c'),
         opt('d'),
       ]);
+      expect(QuestionValidation.isValid(q), isTrue);
+    });
+
+    test('rejects a question where all options are correct', () {
+      final q = validQuestion().copyWith(options: [
+        opt('a', correct: true),
+        opt('b', correct: true),
+        opt('c', correct: true),
+        opt('d', correct: true),
+      ]);
       final r = QuestionValidation.validate(q);
       expect(r.valid, isFalse);
-      expect(r.errors.any((e) => e.contains('1 alternativa correta')), isTrue);
+      expect(r.errors.any((e) => e.contains('todas as alternativas')), isTrue);
     });
 
     test('rejects a question missing an explanation on some option', () {

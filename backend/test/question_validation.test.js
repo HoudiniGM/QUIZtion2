@@ -38,11 +38,31 @@ describe('validateQuestion', () => {
     expect(r.errors.join(' ')).toMatch(/4 alternativas/);
   });
 
-  it('rejects when not exactly one option is correct', () => {
+  it('rejects when no option is correct', () => {
     const opts = validRaw().options.map((o) => ({ ...o, correct: false }));
     const r = validateQuestion(validRaw({ options: opts }));
     expect(r.valid).toBe(false);
-    expect(r.errors.join(' ')).toMatch(/1 alternativa correta/);
+    expect(r.errors.join(' ')).toMatch(/pelo menos 1 alternativa correta/);
+  });
+
+  it('accepts a question with more than one correct option', () => {
+    const opts = validRaw().options.map((o, i) => ({
+      ...o,
+      correct: i < 2, // two correct
+    }));
+    const r = validateQuestion(validRaw({ options: opts }), {
+      theme: 'Java Core',
+      subtopic: 'Collections',
+    });
+    expect(r.valid).toBe(true);
+    expect(r.value.options.filter((o) => o.correct)).toHaveLength(2);
+  });
+
+  it('rejects when all options are correct', () => {
+    const opts = validRaw().options.map((o) => ({ ...o, correct: true }));
+    const r = validateQuestion(validRaw({ options: opts }));
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(' ')).toMatch(/todas as alternativas/);
   });
 
   it('rejects an option without explanation', () => {
