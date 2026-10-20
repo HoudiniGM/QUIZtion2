@@ -6,6 +6,55 @@ const DIFFICULTY_LABEL = {
   advanced: 'avançado',
 };
 
+/** Max length accepted for a user-provided custom template (token safety). */
+const MAX_TEMPLATE_CHARS = 20000;
+
+/**
+ * Builds the prompt from a user-provided template by substituting the
+ * {{placeholders}} with the real values. The response FORMAT is NOT controlled
+ * here — it is enforced separately by the response schema.
+ *
+ * Returns { promptVersion, prompt }. `promptVersion` is marked 'custom' so
+ * generation metadata reflects that a custom template was used.
+ */
+export function buildPromptFromTemplate(template, params) {
+  const {
+    theme,
+    subtopic,
+    difficulty,
+    quantity,
+    material = '',
+    existingSummaries = [],
+  } = params;
+
+  const difficultyLabel = DIFFICULTY_LABEL[difficulty] ?? difficulty;
+
+  const tpl = String(template).slice(0, MAX_TEMPLATE_CHARS);
+
+  const existingText = (existingSummaries || [])
+    .map((s) => (typeof s === 'string' ? s.trim() : ''))
+    .filter((s) => s.length > 0)
+    .map((s, i) => `${i + 1}. ${s}`)
+    .join('\n');
+
+  const values = {
+    theme: theme ?? '',
+    subtopic: subtopic ?? '',
+    difficulty: difficultyLabel ?? '',
+    quantity: String(quantity ?? ''),
+    material: clampMaterial((material || '').trim()) || '(nenhum)',
+    existing: existingText || '(nenhuma)',
+  };
+
+  const prompt = tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) => {
+    return Object.prototype.hasOwnProperty.call(values, key)
+      ? values[key]
+      : match;
+  });
+
+  return { promptVersion: 'custom', prompt };
+}
+
 /**
  * Builds the full prompt for a generation request by combining:
  *  1. the permanent, generic base prompt (versioned);

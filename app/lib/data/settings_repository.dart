@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsRepository {
   static const _backendUrlKey = 'backend_url';
   static const _themeModeKey = 'theme_mode';
+  static const _customPromptKey = 'custom_prompt';
 
   /// Compile-time default, e.g.:
   ///   flutter run --dart-define=BACKEND_URL=http://192.168.0.10:3000
@@ -62,5 +63,22 @@ class SettingsRepository {
       ThemeMode.light => 'light',
     };
     await _prefs.setString(_themeModeKey, value);
+  }
+
+  /// Custom prompt template saved by the user, or null if using the default.
+  String? get customPrompt {
+    final v = _prefs.getString(_customPromptKey);
+    return (v != null && v.trim().isNotEmpty) ? v : null;
+  }
+
+  bool get hasCustomPrompt => customPrompt != null;
+
+  Future<void> setCustomPrompt(String prompt) async {
+    await _prefs.setString(_customPromptKey, prompt);
+  }
+
+  /// Clears the custom prompt, reverting to the backend's default.
+  Future<void> clearCustomPrompt() async {
+    await _prefs.remove(_customPromptKey);
   }
 }

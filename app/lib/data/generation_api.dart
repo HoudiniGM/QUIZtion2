@@ -68,6 +68,7 @@ class GenerationApi {
     required int quantity,
     String material = '',
     List<String> existingSummaries = const [],
+    String? customPrompt,
   }) async {
     final uri = Uri.parse('${_normalizedBase()}/generate');
     final body = jsonEncode({
@@ -77,6 +78,8 @@ class GenerationApi {
       'quantity': quantity,
       'material': material,
       'existingSummaries': existingSummaries,
+      if (customPrompt != null && customPrompt.trim().isNotEmpty)
+        'customPrompt': customPrompt,
     });
 
     http.Response response;
@@ -241,6 +244,38 @@ class GenerationApi {
       themeExists: json['themeExists'] == true,
       topicExists: json['topicExists'] == true,
     );
+  }
+
+  /// Fetches the backend's default prompt template (for the editor / restore).
+  /// Throws [GenerationException] on failure.
+  Future<String> fetchDefaultPrompt() async {
+    final uri = Uri.parse('${_normalizedBase()}/prompt');
+    http.Response response;
+    try {
+      response = await _client.get(uri).timeout(timeout);
+    } on TimeoutException {
+      throw const GenerationException(
+        'O servidor demorou para responder. Tente novamente.',
+      );
+    } catch (_) {
+      throw const GenerationException(
+        'Não foi possível conectar ao servidor. Verifique o endereço do '
+        'backend nas Configurações.',
+      );
+    }
+    if (response.statusCode != 200) {
+      throw const GenerationException(
+        'Não foi possível obter o prompt padrão.',
+      );
+    }
+    try {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return json['template'] as String;
+    } catch (_) {
+      throw const GenerationException(
+        'O servidor retornou uma resposta inválida.',
+      );
+    }
   }
 
   String _normalizedBase() {

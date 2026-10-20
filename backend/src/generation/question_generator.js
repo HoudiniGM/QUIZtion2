@@ -2,7 +2,10 @@ import { randomUUID } from 'node:crypto';
 
 import { logger } from '../logger.js';
 import { GeminiClient } from './gemini_client.js';
-import { buildPrompt } from './prompt_builder.js';
+import {
+  buildPrompt,
+  buildPromptFromTemplate,
+} from './prompt_builder.js';
 import {
   statementSignature,
   validateQuestion,
@@ -45,7 +48,7 @@ export class QuestionGenerator {
       attempt++;
       const remaining = quantity - saved.length;
 
-      const built = buildPrompt({
+      const perAttemptParams = {
         ...params,
         quantity: remaining,
         // Feed back what we already have, plus the originals, to steer away
@@ -54,7 +57,11 @@ export class QuestionGenerator {
           ...(params.existingSummaries ?? []),
           ...saved.map((q) => q.statement),
         ],
-      });
+      };
+      // Use the user's custom template when provided, else the default build.
+      const built = params.customPrompt
+          ? buildPromptFromTemplate(params.customPrompt, perAttemptParams)
+          : buildPrompt(perAttemptParams);
       promptVersion = built.promptVersion;
 
       let rawQuestions;

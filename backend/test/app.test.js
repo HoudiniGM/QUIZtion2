@@ -111,6 +111,37 @@ describe('POST /generate behavior', () => {
   });
 });
 
+describe('GET /prompt', () => {
+  it('returns the default template and placeholders', async () => {
+    const app = createApp({});
+    const res = await request(app).get('/prompt');
+    expect(res.status).toBe(200);
+    expect(typeof res.body.template).toBe('string');
+    expect(res.body.template.length).toBeGreaterThan(0);
+    expect(res.body.placeholders).toContain('theme');
+  });
+});
+
+describe('POST /generate with a custom prompt', () => {
+  it('passes the custom prompt through to the generator', async () => {
+    let received;
+    const generator = {
+      generate: jest.fn(async (params) => {
+        received = params;
+        return { saved: [{ id: 'q1' }], failed: 0, promptVersion: 'custom' };
+      }),
+    };
+    const app = createApp({ generator });
+    const res = await request(app).post('/generate').send({
+      ...validBody(),
+      customPrompt: 'Meu prompt {{theme}} {{subtopic}}',
+    });
+    expect(res.status).toBe(200);
+    expect(received.customPrompt).toContain('{{theme}}');
+    expect(res.body.promptVersion).toBe('custom');
+  });
+});
+
 describe('POST /classify', () => {
   it('rejects an empty description', async () => {
     const app = createApp({

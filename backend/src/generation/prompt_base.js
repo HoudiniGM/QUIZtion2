@@ -63,3 +63,49 @@ Níveis de dificuldade (use o informado):
 Saída:
 - Responda SOMENTE com os dados estruturados solicitados, sem texto extra.
 `.trim();
+
+/**
+ * Default EDITABLE prompt template, exposed to the app so the user can tweak
+ * or experiment with prompts. It uses placeholders that the backend replaces
+ * with the real values at generation time:
+ *
+ *   {{theme}}      - chosen theme
+ *   {{subtopic}}   - chosen subtopic
+ *   {{difficulty}} - difficulty label (básico/intermediário/avançado)
+ *   {{quantity}}   - number of questions requested
+ *   {{material}}   - optional complementary material (may be empty)
+ *   {{existing}}   - summary of existing questions (to avoid duplicates)
+ *
+ * NOTE: the response FORMAT (structured JSON) is enforced by the system via the
+ * response schema, independently of this template — so editing the template
+ * changes the instructions, never the output shape.
+ */
+export const DEFAULT_PROMPT_TEMPLATE = `
+${BASE_PROMPT}
+
+Especialização desta geração:
+- Tema: {{theme}}
+- Subtópico: {{subtopic}}
+Atue como especialista em "{{theme}}", com foco em "{{subtopic}}".
+
+Gere {{quantity}} questão(ões) no nível de dificuldade {{difficulty}}.
+
+Material complementar fornecido pelo usuário (use como orientação; ele não é a
+única fonte; complemente com conhecimento pertinente; não reproduza erros
+factuais evidentes nem invente citações/dados a partir dele):
+{{material}}
+
+Para evitar duplicatas, considere as questões já existentes abaixo e não as
+repita (nem variações cosméticas que avaliem o mesmo ponto da mesma forma):
+{{existing}}
+`.trim();
+
+/// The placeholder tokens recognized in a prompt template.
+export const PROMPT_PLACEHOLDERS = [
+  'theme',
+  'subtopic',
+  'difficulty',
+  'quantity',
+  'material',
+  'existing',
+];

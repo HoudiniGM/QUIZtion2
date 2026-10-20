@@ -54,6 +54,13 @@ export function validateGenerateRequest(body) {
     ? b.existingSummaries.filter((s) => typeof s === 'string').slice(0, 50)
     : [];
 
+  // Optional: a user-edited prompt template (with {{placeholders}}). When
+  // present and non-empty, it overrides the default prompt assembly.
+  const customPrompt =
+    typeof b.customPrompt === 'string' && b.customPrompt.trim() !== ''
+      ? b.customPrompt
+      : null;
+
   if (errors.length > 0) {
     return { valid: false, errors };
   }
@@ -67,6 +74,7 @@ export function validateGenerateRequest(body) {
       quantity,
       material,
       existingSummaries,
+      customPrompt,
     },
   };
 }

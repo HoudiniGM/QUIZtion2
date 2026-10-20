@@ -75,6 +75,7 @@ class GenerationController extends ChangeNotifier {
           theme: theme,
           subtopic: subtopic,
         ),
+        customPrompt: _appState.settings.customPrompt,
       );
 
       if (result.questions.isNotEmpty) {

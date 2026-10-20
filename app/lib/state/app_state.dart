@@ -33,6 +33,29 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  String? get customPrompt => _settings.customPrompt;
+  bool get hasCustomPrompt => _settings.hasCustomPrompt;
+
+  Future<void> setCustomPrompt(String prompt) async {
+    await _settings.setCustomPrompt(prompt);
+    notifyListeners();
+  }
+
+  Future<void> clearCustomPrompt() async {
+    await _settings.clearCustomPrompt();
+    notifyListeners();
+  }
+
+  /// Fetches the backend's default prompt template.
+  Future<String> fetchDefaultPrompt() async {
+    final api = GenerationApi(baseUrl: _settings.backendUrl);
+    try {
+      return await api.fetchDefaultPrompt();
+    } finally {
+      api.close();
+    }
+  }
+
   bool _loading = true;
   bool get loading => _loading;
 

@@ -64,6 +64,12 @@ curl -X POST http://localhost:3000/generate \
 A resposta inclui `savedCount`, `failedCount` e `requested` (geração parcial é
 reportada honestamente), além das questões em `saved`.
 
+Prompt padrão editável (`GET /prompt`): retorna o template padrão e a lista de
+placeholders (`{{theme}}`, `{{subtopic}}`, `{{difficulty}}`, `{{quantity}}`,
+`{{material}}`, `{{existing}}`). O app pode enviar um `customPrompt` no corpo do
+`POST /generate` para sobrescrever o template; o formato de resposta (JSON)
+continua garantido pelo backend via schema, independentemente do template.
+
 Sugestão de tema/tópico a partir de texto livre (`POST /classify`):
 
 ```bash

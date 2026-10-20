@@ -2,6 +2,10 @@ import express from 'express';
 import cors from 'cors';
 
 import { hasGeminiKey } from './config.js';
+import {
+  DEFAULT_PROMPT_TEMPLATE,
+  PROMPT_PLACEHOLDERS,
+} from './generation/prompt_base.js';
 import { logger } from './logger.js';
 import { validateClassifyRequest } from './validation/classify_validation.js';
 import { validateGenerateRequest } from './validation/request_validation.js';
@@ -35,6 +39,15 @@ export function createApp({ generator, classifier } = {}) {
     res.json({
       status: 'ok',
       geminiConfigured: hasGeminiKey(),
+    });
+  });
+
+  // Default editable prompt template, so the app can pre-fill the editor and
+  // offer a "restore default" action. Lists the supported placeholders.
+  app.get('/prompt', (_req, res) => {
+    res.json({
+      template: DEFAULT_PROMPT_TEMPLATE,
+      placeholders: PROMPT_PLACEHOLDERS,
     });
   });
 
