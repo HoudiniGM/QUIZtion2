@@ -194,7 +194,9 @@ class _PromptEditorState extends State<_PromptEditor> {
     } catch (e) {
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível carregar o prompt padrão.')),
+          const SnackBar(
+            content: Text('Não foi possível carregar o prompt padrão.'),
+          ),
         );
       }
     } finally {
@@ -223,8 +225,8 @@ class _PromptEditorState extends State<_PromptEditor> {
                   style: theme.textTheme.titleMedium),
             ),
             if (appState.hasCustomPrompt)
-              Chip(
-                label: const Text('Personalizado'),
+              const Chip(
+                label: Text('Personalizado'),
                 visualDensity: VisualDensity.compact,
               ),
           ],
